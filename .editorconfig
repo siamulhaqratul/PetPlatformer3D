@@ -1,0 +1,23 @@
+root = true
+
+[*.cs]
+# Analyzer / IDE suggestions (IDE*, CA*)
+dotnet_analyzer_diagnostic.severity = none
+
+# Compiler warnings from Unity Editor.log (Assembly-CSharp + Editor)
+dotnet_diagnostic.CS0067.severity = none
+dotnet_diagnostic.CS0108.severity = none
+dotnet_diagnostic.CS0114.severity = none
+dotnet_diagnostic.CS0162.severity = none
+dotnet_diagnostic.CS0168.severity = none
+dotnet_diagnostic.CS0169.severity = none
+dotnet_diagnostic.CS0219.severity = none
+dotnet_diagnostic.CS0282.severity = none
+dotnet_diagnostic.CS0414.severity = none
+dotnet_diagnostic.CS0436.severity = none
+dotnet_diagnostic.CS0618.severity = none
+dotnet_diagnostic.CS0649.severity = none
+dotnet_diagnostic.CS1701.severity = none
+dotnet_diagnostic.CS1702.severity = none
+dotnet_diagnostic.CS4014.severity = none
+dotnet_diagnostic.CS8632.severity = none

@@ -1,0 +1,115 @@
+---
+description: Hamba Structure and Unity C# conventions for Pet Platformer 3D. Apply when editing or creating C# scripts.
+alwaysApply: false
+---
+# Hamba Structure — Unity C#
+
+This project follows strict coding principles for maintainable, scalable, and clean C# code in Unity.
+
+Reference implementation: `Assets/Scripts/SampleCode.cs`  
+Source of truth (keep in sync): `.github/copilot-instructions.md`
+
+## Commands
+
+- **"Do Hamba Structure"** — refactor layout and naming; update all usages in the file.
+- **"Do Hamba Documentation"** — add or update XML docs only when the user gives this command.
+
+## Field naming
+
+- Class-level fields: `_camelCase` (e.g. `_health`, `_score`). Update all usages when renaming.
+- Constants: `ALL_CAPS_WITH_UNDERSCORES` (e.g. `MAX_HEALTH`, `TARGET_SCAN_INTERVAL`). Update all usages when renaming.
+- Readonly fields: `_camelCase`, must **not** be static, placed under the READONLY FIELDS section header below.
+- Do not remove user comments (such as `#region` / region comments) when refactoring or reorganizing fields.
+
+## Section headers (required format)
+
+Every code section must use a **single-line comment** made of long runs of `=` on both sides of the label. Copy the header strings below **exactly** — same spacing, same number of equals signs, same label text. Do not shorten dividers, do not use `#region`, and do not invent alternate styles.
+
+**Rules for headers:**
+
+1. Format: `// <equals> <LABEL> <equals>` on its own line.
+2. The `=` padding must be long enough that the header is visually prominent across the line (see examples).
+3. Put **one blank line** immediately after every section header before the first member in that section.
+4. Only include a section header if that section has at least one field or method.
+
+**Exact section headers (use verbatim when the section is present):**
+
+```csharp
+// =========================== CONSTANTS ===========================
+
+// ======================= STATIC FIELDS ==========================
+
+// ========================= READONLY FIELDS ======================
+
+// ================= SERIALIZED FIELDS (INSPECTOR) =================
+
+// =================== PRIVATE/PROTECTED FIELDS ====================
+
+// ========================= INITIALIZE METHODS ========================
+
+// =========================== PROPERTIES ==========================
+
+// ============================ EVENTS =============================
+
+// ======================= UNITY CALLBACKS =========================
+
+// ========================= PUBLIC METHODS ========================
+
+// ========================= STATIC METHODS ========================
+
+// ========================= PRIVATE METHODS =======================
+
+// ======================== ABSTRACT METHODS =======================
+```
+
+**Example** (serialized fields — note the long `====` dividers):
+
+```csharp
+// ================= SERIALIZED FIELDS (INSPECTOR) =================
+
+[Header("Player Settings")]
+[Tooltip("Current health value of the player.")]
+[SerializeField] private int _health;
+```
+
+## Code structure
+
+- Do **not** add descriptive comments above field declarations unless the user requests documentation.
+- For serialized fields, always use `[Tooltip]` for Inspector documentation. Do not add `//` comments on `[SerializeField]` fields when a `[Tooltip]` is present.
+- When documentation **is** requested: one-line XML `/// <summary>` on properties, methods, and events; include `<param>` tags for method parameters. Never document Unity callbacks (Start, Awake, Update, FixedUpdate, etc.) unless explicitly asked.
+- Use clear, descriptive variable names (avoid single-letter names).
+- Include sections in the order listed above; skip any section that has no members.
+
+## General practices
+
+Do not add documentation comments (XML summary, method, or property comments) unless the user says **"Do Hamba Documentation"** or otherwise asks for documentation.
+
+- Use `[Header]` for inspector grouping.
+- Use properties instead of public fields.
+- Avoid magic numbers and strings; use named constants.
+- Use the most restrictive access modifier possible.
+- Keep methods short and focused.
+
+## Unity-specific practices
+
+- Cache components and frequently used GameObjects in `Start`.
+- Cache `transform` instead of accessing it repeatedly.
+- Use `Start` for initialization; avoid `Awake` unless necessary.
+- Avoid `Find` or `FindObjectOfType` for lookups.
+- Avoid heavy logic in `Update`.
+- Use `FixedUpdate` for physics-related logic.
+- Use events instead of polling every frame.
+- Separate input handling from movement logic.
+- Use `ScriptableObject` for data-driven design.
+- Use object pooling for frequently spawned objects.
+- Use coroutines for delayed or repeated actions.
+- Follow component-based architecture.
+- Use curly braces for all control statements, except guard clauses.
+- Extract complex conditions into well-named variables or methods.
+- Use string interpolation (`$""`) for clarity.
+- Use `var` wisely.
+- One class, enum, interface, or abstract per file.
+
+## Tooling
+
+- Always prefer the Unity MCP tools when they are available (scene/GameObject/asset/prefab edits, script validation, reading the console, running tests, refreshing the editor). Fall back to direct file edits or other tools only when Unity MCP is unavailable or can't do the task.

@@ -1,0 +1,23 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityExt.UI.EffectUltra;
+using System;
+using UnityExt;
+using AttributeExt2;
+
+[CreateAssetMenu(menuName = ULabel.CreateAssetLabelForSO + "UI/Ultra Tween Objects/#SCRIPTNAME#", fileName = "New #SCRIPTNAME#", order = 0)]
+public class #SCRIPTNAME# : UIAnimationAssetSO
+{
+    protected override void OnStop(UIAnimation callerContext)
+    {
+        //Any logic you want to do when Stop() is called on UIAnimation typed components
+    }
+
+    protected override void Play(UIAnimation callerContext, AnimHandle handle, Action OnComplete)
+    {
+        //Implement how would you handle this effect
+        //coroutine should be started on 'callerContext' and added by 'handle.AddCoroutine(coroutine)'
+        //At the end, invoke 'OnComplete'
+    }
+}

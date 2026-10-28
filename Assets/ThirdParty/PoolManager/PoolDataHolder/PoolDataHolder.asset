@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0bbb85e01bd7df4fbaf48325352499b, type: 3}
+  m_Name: PoolDataHolder
+  m_EditorClassIdentifier: 
+  _dataForPoolList:
+  - {fileID: 11400000, guid: dab055e60e3dfad4f9af42ccbb635fbb, type: 2}
+  - {fileID: 11400000, guid: d12ffcf1cda6fe240bf57c4439c92231, type: 2}
+  - {fileID: 11400000, guid: 29ade8e7d61fd0a489159d07593a4e3a, type: 2}
+  - {fileID: 11400000, guid: 01e34c5d874f49b4a93882a82d6d00d4, type: 2}
+  - {fileID: 11400000, guid: cb361f41ffcc4ef469ad2a7e546a323b, type: 2}
+  - {fileID: 11400000, guid: cb978f0aa3b5cb74094872e385c8aff9, type: 2}
+  _allPoolListShow:
+  - {fileID: 11400000, guid: dab055e60e3dfad4f9af42ccbb635fbb, type: 2}
+  _wrongDataPool: []
