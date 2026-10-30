@@ -109,3 +109,7 @@ Credentials/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Editor test screenshots
+/Assets/Screenshots/
+/Assets/Screenshots.meta

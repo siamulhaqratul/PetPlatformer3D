@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72bd055563b47f64c9f610e11f87615a, type: 3}
+  m_Name: BunnyMovementStats
+  m_EditorClassIdentifier: 
+  _forwardSpeed: 8.5
+  _forwardAcceleration: 20
+  _steerSpeed: 7
+  _steerAcceleration: 45
+  _steerDeceleration: 60
+  _airControl: 0.65
+  _jumpHeight: 5
+  _gravity: 34
+  _fallGravityMultiplier: 1.6
+  _jumpCutMultiplier: 0.9
+  _maxFallSpeed: 28
+  _coyoteTime: 0.1
+  _jumpBufferTime: 0.12
+  _ledgeAssistHeight: 0.8
+  _bonkTime: 0.15
+  _laneSpacing: 2
+  _maxLaneOffset: 2
+  _laneSteerSoftness: 0.6
+  _rollDuration: 0.6
+  _rollHeight: 0.9
+  _rollRadius: 0.45
+  _slamSpeed: 24
+  _canGlide: 0
+  _glideFallSpeed: 2.2
+  _glideForwardMultiplier: 0.85

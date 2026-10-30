@@ -84,7 +84,7 @@ namespace JFeel
             base.Show();
             _transform.DOKill();
             tween.Kill();
-            tween = _transform.DOScale(1f, 0.25f);
+            tween = _transform.DOScale(1f, 0.25f).SetUpdate(true);
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace JFeel
             base.Hide(null);
             _transform.DOKill();
             tween.Kill();
-            tween = _transform.DOScale(0.9f, 0.25f).OnComplete(() => { OnComplete?.Invoke(); });
+            tween = _transform.DOScale(0.9f, 0.25f).SetUpdate(true).OnComplete(() => { OnComplete?.Invoke(); });
         }
     }
 }
