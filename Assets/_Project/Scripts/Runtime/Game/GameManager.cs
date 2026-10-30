@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
     [Header("Course")]
     [Tooltip("Where the pet starts every run.")]
     [SerializeField] private Transform _spawnPoint;
-    [Tooltip("Finish line, used to measure course progress.")]
+    [Tooltip("Finish line. Passing it wins the run, even in mid-air, and it also measures course progress.")]
     [SerializeField] private Transform _finishPoint;
     [Tooltip("Hides coins and obstacles the pet has already passed.")]
     [SerializeField] private CourseCuller _courseCuller;
@@ -47,8 +47,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float _resumeRunDelay = 0.4f;
     [Tooltip("Coins placed in the course, set by the level builder.")]
     [SerializeField] private int _totalCoins;
-    [Tooltip("Coins needed for the coin star. Capped at the number of coins in the course.")]
-    [SerializeField] private int _coinStarTarget = 100;
+    [Tooltip("Share of the course's coins needed for the coin star, so the target follows the coin count.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _coinStarShare = 0.8f;
     [Tooltip("Seconds after a win or fail before jump restarts the run.")]
     [SerializeField] private float _quickRestartDelay = 0.8f;
 
@@ -106,7 +107,7 @@ public class GameManager : MonoBehaviour
     public bool IsNewBest => _isNewBest;
     public float FurthestProgress => _furthestProgress;
     public float CourseProgress => Mathf.Clamp01(Mathf.InverseLerp(_spawnPoint.position.z, _finishPoint.position.z, _petTransform.position.z));
-    public int CoinsForStar => Mathf.Min(_coinStarTarget, _totalCoins);
+    public int CoinsForStar => Mathf.CeilToInt(_totalCoins * _coinStarShare);
     public bool HasCoinStar => _totalCoins > 0 && _coinsCollected >= CoinsForStar;
     public int EarnedStars => FINISH_STARS + (_livesLost == 0 ? NO_DAMAGE_STARS : 0) + (HasCoinStar ? COIN_STARS : 0);
 
@@ -131,6 +132,7 @@ public class GameManager : MonoBehaviour
         GameEvents.OnCheckpointReached += HandleCheckpointReached;
         GameEvents.OnFinishReached += HandleFinishReached;
         GameEvents.OnCoinCollected += HandleCoinCollected;
+        _formController.OnFormChanged += HandleFormChanged;
         _input.OnPausePressed += TogglePause;
         _input.OnJumpPressed += HandleJumpPressed;
     }
@@ -142,6 +144,7 @@ public class GameManager : MonoBehaviour
         GameEvents.OnCheckpointReached -= HandleCheckpointReached;
         GameEvents.OnFinishReached -= HandleFinishReached;
         GameEvents.OnCoinCollected -= HandleCoinCollected;
+        _formController.OnFormChanged -= HandleFormChanged;
         _input.OnPausePressed -= TogglePause;
         _input.OnJumpPressed -= HandleJumpPressed;
     }
@@ -149,6 +152,7 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         CheckFall();
+        CheckFinish();
         TrackProgress();
     }
 
@@ -232,6 +236,14 @@ public class GameManager : MonoBehaviour
     {
         _coinsCollected++;
         OnCoinsChanged?.Invoke(_coinsCollected, _totalCoins);
+        Vibration.Light();
+    }
+
+    private void HandleFormChanged(PetForm form, bool isFromGate)
+    {
+        if (!isFromGate) return;
+
+        Vibration.Medium();
     }
 
     private void SaveBestStars()
@@ -258,6 +270,15 @@ public class GameManager : MonoBehaviour
         HandlePetHit();
     }
 
+    // The finish trigger has a fixed height, so a high jump or glide can clear it; passing its Z always counts.
+    private void CheckFinish()
+    {
+        bool hasPassedFinish = _state == GameState.Playing && _petTransform.position.z >= _finishPoint.position.z;
+        if (!hasPassedFinish) return;
+
+        HandleFinishReached();
+    }
+
     private void HandlePetHit()
     {
         bool canLoseLife = _state == GameState.Playing && _loseLifeRoutine == null;
@@ -271,6 +292,7 @@ public class GameManager : MonoBehaviour
         _motor.SetRunning(false);
         _motor.SetFrozen(true);
         _visual.PlayHit();
+        Vibration.Heavy();
         _lives--;
         _livesLost++;
         OnLivesChanged?.Invoke(_lives);
@@ -317,6 +339,7 @@ public class GameManager : MonoBehaviour
     {
         _checkpointPosition = respawnPosition;
         _checkpointForm = _formController.CurrentForm;
+        Vibration.Light();
     }
 
     private void HandleFinishReached()
@@ -326,6 +349,7 @@ public class GameManager : MonoBehaviour
 
         _motor.SetRunning(false);
         _visual.PlayDance();
+        Vibration.Medium();
         SaveBestStars();
         SetState(GameState.Won);
     }

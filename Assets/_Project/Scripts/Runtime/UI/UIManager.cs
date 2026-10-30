@@ -251,7 +251,8 @@ public class UIManager : MonoBehaviour
 
     private void PlayClick()
     {
-        _audioSource.PlayOneShot(_clickClip);
+        _audioSource.PlayOneShot(_clickClip, SoundSettings.SfxVolume);
+        Vibration.Light();
     }
 
     private void StartIdleAnimations()
@@ -291,7 +292,7 @@ public class UIManager : MonoBehaviour
 
         if (!isPickup) return;
 
-        _audioSource.PlayOneShot(_coinClip);
+        _audioSource.PlayOneShot(_coinClip, SoundSettings.SfxVolume);
         _coinIcon.DOKill();
         _coinIcon.localScale = Vector3.one;
         _coinIcon.DOPunchScale(Vector3.one * COIN_PUNCH_SCALE, COIN_PUNCH_DURATION);

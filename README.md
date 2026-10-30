@@ -7,6 +7,27 @@ A small 3D platformer prototype starring a cube pet, made for the Nagorik Junior
 - **Input:** Unity Input System (keyboard/gamepad on web, on-screen controls on Android)
 - **Camera:** Cinemachine 2.10
 
+## How to play
+
+Pet Shift Run: the pet runs forward on its own. Steer between the two lanes, jump the gaps and spikes, and pick an animal at each gate pair. Reach the finish flag with 3 lives. You earn a star for finishing, a star for collecting enough coins, and a star for losing no lives.
+
+| Action | Keyboard / gamepad | Touch |
+| --- | --- | --- |
+| Steer | A / D, Left / Right, left stick | Swipe left / right |
+| Jump (hold to glide as the Bee) | Space, W, Up, South button | Swipe up |
+| Roll / duck | S, Down, East button | Swipe down |
+| Pause | Esc, P, Start | Pause button |
+
+| Animal | Ability |
+| --- | --- |
+| Dog | Start form, balanced run and jump |
+| Bunny | High jump |
+| Bee | Hold jump to glide |
+
+## What was cut
+
+The plan had five animals. The Elephant (smashing crate walls) and the Penguin (sliding on snow) were cut, so the time could go into making jumping and the three remaining animals feel good.
+
 ## Project layout
 
 ```

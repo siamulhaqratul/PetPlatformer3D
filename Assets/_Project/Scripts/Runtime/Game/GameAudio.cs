@@ -50,12 +50,23 @@ public class GameAudio : MonoBehaviour
     [Tooltip("Jingle for losing the last life.")]
     [SerializeField] private AudioClip _failJingle;
 
+    [Header("Music")]
+    [Tooltip("Source for the looping background music. Leave empty for no music.")]
+    [SerializeField] private AudioSource _musicSource;
+    [Tooltip("Background music track, looped for the whole session.")]
+    [SerializeField] private AudioClip _musicClip;
+
     [Header("Variation")]
     [Tooltip("How far each effect's pitch may drift up or down, so repeated sounds do not feel mechanical.")]
     [Range(0f, 0.3f)]
     [SerializeField] private float _pitchVariation = 0.06f;
 
     // ======================= UNITY CALLBACKS =========================
+
+    private void Start()
+    {
+        PlayMusic();
+    }
 
     private void OnEnable()
     {
@@ -81,7 +92,27 @@ public class GameAudio : MonoBehaviour
         GameEvents.OnPetRespawned -= HandlePetRespawned;
     }
 
+    // ========================= PUBLIC METHODS ========================
+
+    // Called by the settings panel when the BGM slider moves.
+    public void RefreshMusicVolume()
+    {
+        if (_musicSource == null) return;
+
+        _musicSource.volume = SoundSettings.BgmVolume;
+    }
+
     // ========================= PRIVATE METHODS =======================
+
+    private void PlayMusic()
+    {
+        if (_musicSource == null || _musicClip == null) return;
+
+        _musicSource.clip = _musicClip;
+        _musicSource.loop = true;
+        RefreshMusicVolume();
+        _musicSource.Play();
+    }
 
     private void HandleJumped()
     {
@@ -148,7 +179,7 @@ public class GameAudio : MonoBehaviour
         if (clip == null) return;
 
         _effectsSource.pitch = 1f + Random.Range(-_pitchVariation, _pitchVariation);
-        _effectsSource.PlayOneShot(clip, volume);
+        _effectsSource.PlayOneShot(clip, volume * SoundSettings.SfxVolume);
     }
 
     private void PlayJingle(AudioClip clip)
@@ -157,6 +188,7 @@ public class GameAudio : MonoBehaviour
 
         _jingleSource.Stop();
         _jingleSource.clip = clip;
+        _jingleSource.volume = SoundSettings.SfxVolume;
         _jingleSource.Play();
     }
 }

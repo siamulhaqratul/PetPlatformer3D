@@ -47,8 +47,8 @@ public static class LevelBuilder
     private const float BORDER_DECOR_INSET = 0.9f;
     private const float BORDER_DECOR_SCALE = 1.2f;
     private const float SPAWN_HEIGHT = 0.1f;
-    private const float TRIGGER_HEIGHT = 4f;
-    private const float TRIGGER_DEPTH = 1f;
+    private const float TRIGGER_HEIGHT = 20f;
+    private const float TRIGGER_DEPTH = 4f;
     private const float COURSE_TRIGGER_WIDTH = 10f;
     private const float HAZARD_TRIGGER_INSET = 0.8f;
     private const float SPIKE_BLOCK_SCALE = 1.2f;
@@ -199,7 +199,7 @@ public static class LevelBuilder
         startZ = _cursorZ;
         Platform(16f, STEP_HEIGHT * 2f, _rightLane, false);
         CoinLine(RIGHT_LANE, STEP_HEIGHT * 2f, startZ + 4f, SHORT_COIN_LINE_COUNT);
-        CoinArcFromEdge(RIGHT_LANE, 0f, STEP_HEIGHT * 2f);
+        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, STEP_HEIGHT * 2f);
 
         Gap();
         startZ = _cursorZ;
@@ -227,7 +227,7 @@ public static class LevelBuilder
         startZ = _cursorZ;
         Platform(14f, STEP_HEIGHT, _rightLane, false);
         CoinLine(RIGHT_LANE, STEP_HEIGHT, startZ + 4f, SHORT_COIN_LINE_COUNT);
-        CoinArcFromEdge(RIGHT_LANE, 0f, STEP_HEIGHT);
+        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, STEP_HEIGHT);
         GlideTrail(RIGHT_LANE, 0f, STEP_HEIGHT, _cursorZ);
 
         // The slider swings between the lanes, so the jump onto it is timed, and it carries the pet across.
@@ -571,7 +571,6 @@ public static class LevelBuilder
         foreach (float side in _bothLanes)
         {
             GameObject flag = PlaceKit(FLAG, finish.transform, new Vector3(side * 1.9f, topY, z));
-            flag.transform.localScale = Vector3.one * FLAG_SCALE;
             flag.transform.localScale = new Vector3(side * FLAG_SCALE, FLAG_SCALE, FLAG_SCALE);
         }
     }
