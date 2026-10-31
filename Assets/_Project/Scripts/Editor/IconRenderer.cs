@@ -75,6 +75,16 @@ public static class IconRenderer
         return AssetDatabase.LoadAssetAtPath<Sprite>(outputPath);
     }
 
+    // The same outlined portrait at any size, with the outline scaled to match. The caller owns the texture.
+    public static Texture2D RenderPortraitTexture(string modelPath, int size)
+    {
+        Texture2D render = RenderModel(modelPath, _portraitRotation, size);
+        int outlineRadius = Mathf.RoundToInt(OUTLINE_RADIUS * (float)size / TEXTURE_SIZE);
+        Texture2D outlined = Recolor(render, null, _portraitOutline, outlineRadius);
+        Object.DestroyImmediate(render);
+        return outlined;
+    }
+
     // White gear with a hole for the settings buttons, drawn in code because the UI Pack has no settings icon.
     public static Sprite EnsureGearSprite()
     {
@@ -127,7 +137,7 @@ public static class IconRenderer
     }
 
     // Renders the model head-on with an orthographic camera framed to its bounds, on a transparent background.
-    private static Texture2D RenderModel(string modelPath, Quaternion rotation)
+    private static Texture2D RenderModel(string modelPath, Quaternion rotation, int size = TEXTURE_SIZE)
     {
         var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
         GameObject model = Object.Instantiate(modelAsset, _stagePosition, rotation);
@@ -146,7 +156,7 @@ public static class IconRenderer
         cameraObject.transform.position = bounds.center + Vector3.back * CAMERA_DISTANCE;
         cameraObject.transform.rotation = Quaternion.identity;
 
-        var renderTexture = new RenderTexture(TEXTURE_SIZE, TEXTURE_SIZE, DEPTH_BITS, RenderTextureFormat.ARGB32)
+        var renderTexture = new RenderTexture(size, size, DEPTH_BITS, RenderTextureFormat.ARGB32)
         {
             antiAliasing = ANTI_ALIASING,
         };
@@ -155,8 +165,8 @@ public static class IconRenderer
 
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = renderTexture;
-        var texture = new Texture2D(TEXTURE_SIZE, TEXTURE_SIZE, TextureFormat.RGBA32, false);
-        texture.ReadPixels(new Rect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE), 0, 0);
+        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        texture.ReadPixels(new Rect(0, 0, size, size), 0, 0);
         texture.Apply();
         RenderTexture.active = previous;
 
@@ -168,7 +178,7 @@ public static class IconRenderer
     }
 
     // Optionally swaps the colour (keeping the model's shading), then adds a solid outline around the silhouette.
-    private static Texture2D Recolor(Texture2D source, Color? baseColor, Color outlineColor)
+    private static Texture2D Recolor(Texture2D source, Color? baseColor, Color outlineColor, int outlineRadius = OUTLINE_RADIUS)
     {
         int size = source.width;
         Color[] pixels = source.GetPixels();
@@ -205,7 +215,7 @@ public static class IconRenderer
                 int index = y * size + x;
                 if (pixels[index].a >= ALPHA_OPAQUE) continue;
 
-                float coverage = OutlineCoverage(pixels, size, x, y);
+                float coverage = OutlineCoverage(pixels, size, x, y, outlineRadius);
                 if (coverage <= 0f) continue;
 
                 result[index] = outlineColor;
@@ -219,12 +229,12 @@ public static class IconRenderer
         return texture;
     }
 
-    private static float OutlineCoverage(Color[] pixels, int size, int x, int y)
+    private static float OutlineCoverage(Color[] pixels, int size, int x, int y, int radius)
     {
         float nearest = float.MaxValue;
-        for (int offsetY = -OUTLINE_RADIUS; offsetY <= OUTLINE_RADIUS; offsetY++)
+        for (int offsetY = -radius; offsetY <= radius; offsetY++)
         {
-            for (int offsetX = -OUTLINE_RADIUS; offsetX <= OUTLINE_RADIUS; offsetX++)
+            for (int offsetX = -radius; offsetX <= radius; offsetX++)
             {
                 int sampleX = x + offsetX;
                 int sampleY = y + offsetY;
@@ -235,7 +245,7 @@ public static class IconRenderer
             }
         }
 
-        return Mathf.Clamp01(OUTLINE_RADIUS + 0.5f - nearest);
+        return Mathf.Clamp01(radius + 0.5f - nearest);
     }
 
     private static void WriteSprite(Texture2D texture, string path)
