@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     private const int NO_DAMAGE_STARS = 1;
     private const int COIN_STARS = 1;
     private const string BEST_STARS_KEY = "BestStars";
+    // The coin target is rounded down to a multiple of this, so the win screen asks for a round number.
+    private const int COIN_TARGET_STEP = 5;
 
     // ================= SERIALIZED FIELDS (INSPECTOR) =================
 
@@ -107,7 +109,8 @@ public class GameManager : MonoBehaviour
     public bool IsNewBest => _isNewBest;
     public float FurthestProgress => _furthestProgress;
     public float CourseProgress => Mathf.Clamp01(Mathf.InverseLerp(_spawnPoint.position.z, _finishPoint.position.z, _petTransform.position.z));
-    public int CoinsForStar => Mathf.CeilToInt(_totalCoins * _coinStarShare);
+    // 80% of 63 coins is 50.4, which rounds down to 50. Never below one step, so a course with few coins still needs some.
+    public int CoinsForStar => Mathf.Max(COIN_TARGET_STEP, Mathf.FloorToInt(_totalCoins * _coinStarShare / COIN_TARGET_STEP) * COIN_TARGET_STEP);
     public bool HasCoinStar => _totalCoins > 0 && _coinsCollected >= CoinsForStar;
     public int EarnedStars => FINISH_STARS + (_livesLost == 0 ? NO_DAMAGE_STARS : 0) + (HasCoinStar ? COIN_STARS : 0);
 

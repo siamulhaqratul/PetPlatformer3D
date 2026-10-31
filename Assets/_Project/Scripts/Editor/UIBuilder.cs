@@ -50,6 +50,17 @@ public static class UIBuilder
     private const string CHECK_OFF = "check_square_grey";
     private const float KEYCAP_SIZE = 80f;
     private const float PORTRAIT_CONTENT_WIDTH = 1000f;
+    // Gaps from the screen edges to the top-row items (HUD pills, pause and settings buttons): tight to the side,
+    // roomier at the top so notches and status bars never cover them.
+    private const float EDGE_SIDE_GAP = 16f;
+    private const float EDGE_TOP_GAP = 39f;
+    private const float HUD_ROW_GAP = 12f;
+    private const float HUD_ITEM_GAP = 24f;
+    private const float CORNER_BUTTON_SIZE = 112f;
+    // Height of the progress marker's centre above the bar's centre; below zero it sits lower on the bar.
+    private const float PROGRESS_MARKER_Y = -25f;
+    // The play button and best stars grow in portrait, where the screen is tall enough for them.
+    private const float PORTRAIT_MENU_SCALE = 1.2f;
     private const string DIVIDER = "divider_edges";
     private const float SHINE_WIDTH = 46f;
     private const float SHINE_ANGLE = -20f;
@@ -67,6 +78,8 @@ public static class UIBuilder
     private const string MARKER = "slide_hangle";
     private const string SLIDER_TRACK = "slide_horizontal_grey";
     private const string SLIDER_FILL = "slide_horizontal_color";
+    // A blue disc with a white ring, matching the blue fill.
+    private const string SLIDER_KNOB = "check_round_round_circle";
     private const float SETTINGS_LABEL_X = -215f;
     private const float SETTINGS_CONTROL_X = 120f;
     private const float GEAR_ICON_SIZE = 58f;
@@ -76,12 +89,18 @@ public static class UIBuilder
     private static readonly Color _darkText = new Color(0.22f, 0.24f, 0.32f);
     private static readonly Color _outlineColor = new Color(0.12f, 0.13f, 0.2f);
     private static readonly Vector2 _hudBarSize = new Vector2(600f, 54f);
+    private static readonly Vector2 _hudPillSize = new Vector2(310f, 100f);
+    private static readonly Vector2 _formBadgeSize = new Vector2(310f, 96f);
     private static readonly Vector2 _failBarSize = new Vector2(540f, 54f);
     private static readonly Vector2 _pauseBarSize = new Vector2(14f, 44f);
     private static readonly Vector2 _toastSize = new Vector2(860f, 170f);
     private static readonly Vector2 _heartSize = new Vector2(76f, 70f);
-    private static readonly Vector2 _sliderSize = new Vector2(380f, 34f);
-    private static readonly Vector2 _sliderHandleSize = new Vector2(40f, 54f);
+    // The rail sprites are 192 x 32 with a 32-wide round cap at each end.
+    private static readonly Vector2 _sliderSize = new Vector2(380f, 32f);
+    private static readonly Vector4 _railBorder = new Vector4(32f, 0f, 32f, 0f);
+    private static readonly Vector2 _sliderHandleSize = new Vector2(60f, 60f);
+    private static readonly Vector2 _topEdge = new Vector2(0.5f, 1f);
+    private static readonly Vector2 _bottomEdge = new Vector2(0.5f, 0f);
     private static readonly List<Button> _settingsButtons = new List<Button>();
     private static readonly List<OrientationLayout> _portraitLayouts = new List<OrientationLayout>();
     private static readonly Color _shineColor = new Color(1f, 1f, 1f, 0.35f);
@@ -157,7 +176,7 @@ public static class UIBuilder
         Set(manager, "_hud", screen);
 
         IconRenderer.EnsureHeartSprites(out Sprite heartFull, out Sprite heartEmpty);
-        Image livesPill = CreatePill("LivesPill", content, new Vector2(195f, -70f), new Vector2(310f, 100f), TextAnchor.UpperLeft);
+        Image livesPill = CreatePill("LivesPill", content, TopLeftPosition(_hudPillSize, 0f), _hudPillSize, TextAnchor.UpperLeft);
         var lifeIcons = new Image[3];
         for (int index = 0; index < lifeIcons.Length; index++)
         {
@@ -172,14 +191,17 @@ public static class UIBuilder
         BuildFormToast(content, manager);
         BuildProgressBar(content, manager);
 
-        Image coinPill = CreatePill("CoinPill", content, new Vector2(-300f, -70f), new Vector2(250f, 100f), TextAnchor.UpperRight);
+        // Left of the pause button, with the same top gap.
+        var coinPillSize = new Vector2(250f, 100f);
+        var coinPillPosition = new Vector2(-(EDGE_SIDE_GAP + CORNER_BUTTON_SIZE + HUD_ITEM_GAP + coinPillSize.x * 0.5f), -(EDGE_TOP_GAP + coinPillSize.y * 0.5f));
+        Image coinPill = CreatePill("CoinPill", content, coinPillPosition, coinPillSize, TextAnchor.UpperRight);
         Image coinIcon = CreateImage("CoinIcon", coinPill.rectTransform, LoadSprite(YELLOW, ROUND_BUTTON), new Vector2(-70f, 3f), new Vector2(66f, 66f));
         Set(manager, "_coinIcon", coinIcon.rectTransform);
         TMP_Text coinText = CreateText("CoinText", coinPill.rectTransform, "0", 60f, _darkText, new Vector2(50f, 6f), new Vector2(110f, 90f), false);
         coinText.alignment = TextAlignmentOptions.Left;
         Set(manager, "_coinText", coinText);
 
-        Button pause = CreateButton("PauseButton", content, string.Empty, BLUE, ROUND_BUTTON, new Vector2(-95f, -72f), new Vector2(112f, 112f), 50f, null, TextAnchor.UpperRight);
+        Button pause = CreateButton("PauseButton", content, string.Empty, BLUE, ROUND_BUTTON, TopRightCornerPosition(), Vector2.one * CORNER_BUTTON_SIZE, 50f, null, TextAnchor.UpperRight);
         AddPauseIcon((RectTransform)pause.transform);
         Set(manager, "_pauseButton", pause);
     }
@@ -188,7 +210,7 @@ public static class UIBuilder
     private static void BuildFormBadge(RectTransform parent, SerializedObject manager)
     {
         PetFormBuilder.EnsureForms(out PetForm dog, out _, out _, out _, out _);
-        Image badge = CreatePill("FormBadge", parent, new Vector2(195f, -180f), new Vector2(310f, 96f), TextAnchor.UpperLeft);
+        Image badge = CreatePill("FormBadge", parent, TopLeftPosition(_formBadgeSize, _hudPillSize.y + HUD_ROW_GAP), _formBadgeSize, TextAnchor.UpperLeft);
         Image icon = CreateImage("Icon", badge.rectTransform, dog.Icon, new Vector2(-100f, 6f), new Vector2(84f, 84f));
         TMP_Text name = CreateText("Name", badge.rectTransform, dog.DisplayName, 44f, _darkText, new Vector2(40f, 6f), new Vector2(190f, 70f), false);
         Set(manager, "_formIcon", icon);
@@ -220,17 +242,20 @@ public static class UIBuilder
 
     private static void BuildProgressBar(RectTransform parent, SerializedObject manager)
     {
-        RectTransform fill = CreateProgressBar("ProgressBar", parent, new Vector2(-20f, -72f), _hudBarSize, GREEN, TextAnchor.UpperCenter, out RectTransform track);
+        // Level with the hearts and coins; the bar's 2-unit drop lines its face up with the pills' faces.
+        float barY = TopLeftPosition(_hudPillSize, 0f).y - 2f;
+        RectTransform fill = CreateProgressBar("ProgressBar", parent, new Vector2(-20f, barY), _hudBarSize, GREEN, TextAnchor.UpperCenter, out RectTransform track);
         Set(manager, "_progressFill", fill);
         // In portrait the bar moves down beside the animal badge, clear of the hearts and coins.
-        AddPortraitLayout(track, new Vector2(115f, -180f), _hudBarSize, 0.9f);
+        float badgeY = TopLeftPosition(_formBadgeSize, _hudPillSize.y + HUD_ROW_GAP).y;
+        AddPortraitLayout(track, new Vector2(115f, badgeY), _hudBarSize, 0.9f);
 
         CreateImage("GoalStar", track, LoadSprite(YELLOW, STAR), new Vector2(_hudBarSize.x * 0.5f + 34f, 4f), new Vector2(66f, 62f));
 
         Image marker = CreateImage("ProgressMarker", track, LoadSprite(YELLOW, MARKER), Vector2.zero, new Vector2(34f, 46f));
         marker.rectTransform.anchorMin = new Vector2(0f, 0.5f);
         marker.rectTransform.anchorMax = new Vector2(0f, 0.5f);
-        marker.rectTransform.anchoredPosition = new Vector2(0f, 4f);
+        marker.rectTransform.anchoredPosition = new Vector2(0f, PROGRESS_MARKER_Y);
         Set(manager, "_progressMarker", marker.rectTransform);
     }
 
@@ -240,13 +265,15 @@ public static class UIBuilder
         Set(manager, "_startScreen", screen);
 
         // Same spot and shape as the HUD's pause button.
-        _settingsButtons.Add(CreateGearButton(content, new Vector2(-95f, -72f), TextAnchor.UpperRight));
+        _settingsButtons.Add(CreateGearButton(content, TopRightCornerPosition(), TextAnchor.UpperRight));
 
         // The title fills a holder that changes shape with the orientation; in portrait it wraps onto two lines.
         RectTransform titleHolder = CreateRect("TitleHolder", content);
         titleHolder.anchoredPosition = new Vector2(0f, 300f);
         titleHolder.sizeDelta = new Vector2(1700f, 200f);
-        AddPortraitLayout(titleHolder, new Vector2(0f, 520f), new Vector2(PORTRAIT_CONTENT_WIDTH, 360f), 1f);
+        // In portrait the title and subtitle hang from the top edge and the hints sit on the bottom edge, so a tall
+        // phone spreads the menu over the whole screen instead of bunching it in the middle.
+        AddPortraitLayout(titleHolder, new Vector2(0f, -430f), new Vector2(PORTRAIT_CONTENT_WIDTH, 360f), 1f, _topEdge);
         TMP_Text title = CreateText("Title", titleHolder, "PET SHIFT RUN", 150f, Color.white, Vector2.zero, Vector2.zero, true);
         Stretch(title.rectTransform);
         FitText(title, 80f, 150f);
@@ -255,21 +282,28 @@ public static class UIBuilder
 
         Image banner = CreateImage("SubtitleBanner", content, LoadSprite(BLUE, BUTTON), new Vector2(0f, 175f), new Vector2(1180f, 100f));
         banner.type = Image.Type.Sliced;
-        AddPortraitLayout(banner.rectTransform, new Vector2(0f, 270f), new Vector2(PORTRAIT_CONTENT_WIDTH, 100f), 1f);
+        AddPortraitLayout(banner.rectTransform, new Vector2(0f, -720f), new Vector2(PORTRAIT_CONTENT_WIDTH, 100f), 1f, _topEdge);
         TMP_Text subtitle = CreateText("Subtitle", banner.rectTransform, "Run, jump and reach the summit flag!", 40f, Color.white, Vector2.zero, Vector2.zero, true);
         Stretch(subtitle.rectTransform);
         subtitle.rectTransform.offsetMin = new Vector2(50f, 5f);
         subtitle.rectTransform.offsetMax = new Vector2(-50f, 5f);
         FitText(subtitle, 24f, 40f);
 
-        RectTransform pulse = CreateRect("PlayPulse", content);
-        pulse.anchoredPosition = new Vector2(0f, -20f);
-        pulse.sizeDelta = new Vector2(480f, 150f);
+        // The pulse tween owns the pulse wrapper's scale and the tap effect owns the button's, so a holder around
+        // both is what grows in portrait.
+        RectTransform playHolder = CreateRect("PlayHolder", content);
+        // Best stars in the middle, PLAY just above the control hints so the thumb finds it near the bottom.
+        playHolder.anchoredPosition = new Vector2(0f, -245f);
+        playHolder.sizeDelta = new Vector2(480f, 150f);
+        AddPortraitLayout(playHolder, new Vector2(0f, 400f), playHolder.sizeDelta, PORTRAIT_MENU_SCALE, _bottomEdge);
+        RectTransform pulse = CreateRect("PlayPulse", playHolder);
+        pulse.sizeDelta = playHolder.sizeDelta;
         Set(manager, "_playButtonPulse", pulse);
         Button play = CreateButton("PlayButton", pulse, "PLAY", GREEN, BUTTON, Vector2.zero, new Vector2(480f, 150f), 76f, LoadSprite(EXTRA, ICON_PLAY), TextAnchor.MiddleCenter, true);
         Set(manager, "_playButton", play);
 
-        Image bestPill = CreatePill("BestPill", content, new Vector2(0f, -185f), new Vector2(420f, 100f));
+        Image bestPill = CreatePill("BestPill", content, new Vector2(0f, -40f), new Vector2(420f, 100f));
+        AddPortraitLayout(bestPill.rectTransform, new Vector2(0f, 40f), bestPill.rectTransform.sizeDelta, PORTRAIT_MENU_SCALE);
         CreateText("BestLabel", bestPill.rectTransform, "BEST", 40f, _darkText, new Vector2(-125f, 4f), new Vector2(140f, 60f), false);
         var bestStars = new Image[3];
         for (int index = 0; index < bestStars.Length; index++)
@@ -319,7 +353,7 @@ public static class UIBuilder
         LayoutRebuilder.ForceRebuildLayoutImmediate(row);
         float contentWidth = LayoutUtility.GetPreferredWidth(row);
         float scale = Mathf.Min(1f, PORTRAIT_CONTENT_WIDTH / contentWidth);
-        AddPortraitLayout(row, new Vector2(0f, -380f), row.sizeDelta, scale);
+        AddPortraitLayout(row, new Vector2(0f, 230f), row.sizeDelta, scale, _bottomEdge);
     }
 
     private static RectTransform CreateHintRow(string name, RectTransform parent)
@@ -357,7 +391,8 @@ public static class UIBuilder
         UIScreen screen = CreateScreen("SettingsScreen", root, _dimColor, out RectTransform content);
         RectTransform card = CreateCard(content, BLUE, "SETTINGS", new Vector2(760f, 620f));
 
-        CreateSettingsLabel(card, "SOUND FX", 150f);
+        // Not "SOUND FX": in Kenney Future the X reads as an H at this size.
+        CreateSettingsLabel(card, "EFFECTS", 150f);
         Slider sfxSlider = CreateSlider("SfxSlider", card, new Vector2(SETTINGS_CONTROL_X, 150f));
         CreateSettingsLabel(card, "MUSIC", 45f);
         Slider bgmSlider = CreateSlider("MusicSlider", card, new Vector2(SETTINGS_CONTROL_X, 45f));
@@ -480,26 +515,31 @@ public static class UIBuilder
         text.alignment = TextAlignmentOptions.Left;
     }
 
-    // A UI Pack slider from 0 to 1: a grey track, a coloured fill up to the value and a handle to drag.
+    // A UI Pack slider from 0 to 1: a grey rail, a blue rail up to the value and a round blue knob to drag.
     private static Slider CreateSlider(string name, RectTransform parent, Vector2 position)
     {
-        Image track = CreateImage(name, parent, LoadSprite(GREY, SLIDER_TRACK), position, _sliderSize);
-        track.type = Image.Type.Sliced;
+        Image track = CreateRail(name, parent, GREY, SLIDER_TRACK);
+        track.rectTransform.anchoredPosition = position;
+        track.rectTransform.sizeDelta = _sliderSize;
         track.raycastTarget = true;
 
+        // The handle and the fill's area are both inset by half a knob, so the knob stops at the rail's ends and the
+        // fill's right end always sits under the knob's centre. The fill reaches back out to the rail's left end.
+        float knobInset = _sliderHandleSize.x * 0.5f;
         RectTransform fillArea = CreateRect("FillArea", track.rectTransform);
         Stretch(fillArea);
-        Image fill = CreateImage("Fill", fillArea, LoadSprite(BLUE, SLIDER_FILL), Vector2.zero, Vector2.zero);
-        fill.type = Image.Type.Sliced;
+        fillArea.offsetMin = new Vector2(knobInset, 0f);
+        fillArea.offsetMax = new Vector2(-knobInset, 0f);
+        Image fill = CreateRail("Fill", fillArea, BLUE, SLIDER_FILL);
         Stretch(fill.rectTransform);
+        fill.rectTransform.offsetMin = new Vector2(-knobInset, 0f);
 
-        // Inset by half a handle so the handle stops at the track's ends instead of hanging past them.
         RectTransform handleArea = CreateRect("HandleArea", track.rectTransform);
         Stretch(handleArea);
-        handleArea.offsetMin = new Vector2(_sliderHandleSize.x * 0.5f, 0f);
-        handleArea.offsetMax = new Vector2(-_sliderHandleSize.x * 0.5f, 0f);
-        // The slider stretches the handle to the track's height, so its size here is what it adds to that height.
-        Image handle = CreateImage("Handle", handleArea, LoadSprite(YELLOW, MARKER), Vector2.zero, new Vector2(_sliderHandleSize.x, _sliderHandleSize.y - _sliderSize.y));
+        handleArea.offsetMin = new Vector2(knobInset, 0f);
+        handleArea.offsetMax = new Vector2(-knobInset, 0f);
+        // The slider stretches the handle to the rail's height, so its size here is what it adds to that height.
+        Image handle = CreateImage("Knob", handleArea, LoadSprite(BLUE, SLIDER_KNOB), Vector2.zero, new Vector2(_sliderHandleSize.x, _sliderHandleSize.y - _sliderSize.y));
         handle.raycastTarget = true;
 
         var slider = track.gameObject.AddComponent<Slider>();
@@ -514,10 +554,28 @@ public static class UIBuilder
         return slider;
     }
 
+    // The UI Pack's slider rail: a thin line with a round cap at each end. Only the line stretches, so the caps
+    // stay round, and it is drawn at the sprite's own pixel size so the rail keeps its native thickness.
+    private static Image CreateRail(string name, RectTransform parent, string color, string spriteName)
+    {
+        string path = $"{KENNEY_UI}/PNG/{color}/{SPRITE_SIZE_FOLDER}/{spriteName}.png";
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (importer.spriteBorder != _railBorder)
+        {
+            importer.spriteBorder = _railBorder;
+            importer.SaveAndReimport();
+        }
+
+        Image rail = CreateImage(name, parent, AssetDatabase.LoadAssetAtPath<Sprite>(path), Vector2.zero, Vector2.zero);
+        rail.type = Image.Type.Sliced;
+        rail.pixelsPerUnitMultiplier = 1f;
+        return rail;
+    }
+
     // Round blue button the size of the HUD's pause button, with a gear centred on its face like the pause bars.
     private static Button CreateGearButton(RectTransform parent, Vector2 position, TextAnchor anchor)
     {
-        Button button = CreateButton("SettingsButton", parent, string.Empty, BLUE, ROUND_BUTTON, position, new Vector2(112f, 112f), 50f, null, anchor);
+        Button button = CreateButton("SettingsButton", parent, string.Empty, BLUE, ROUND_BUTTON, position, Vector2.one * CORNER_BUTTON_SIZE, 50f, null, anchor);
         Image gear = CreateImage("Gear", (RectTransform)button.transform, IconRenderer.EnsureGearSprite(), new Vector2(0f, PAUSE_ICON_LIFT), Vector2.one * GEAR_ICON_SIZE);
         var shadow = gear.gameObject.AddComponent<Shadow>();
         shadow.effectColor = _outlineColor;
@@ -666,12 +724,31 @@ public static class UIBuilder
         return root;
     }
 
+    // Centre of an upper-left-anchored element, set in from the left edge and the top edge, plus any rows above it.
+    private static Vector2 TopLeftPosition(Vector2 size, float rowsAbove)
+    {
+        return new Vector2(EDGE_SIDE_GAP + size.x * 0.5f, -(EDGE_TOP_GAP + rowsAbove + size.y * 0.5f));
+    }
+
+    // Centre of the round corner button (pause or settings), anchored upper right.
+    private static Vector2 TopRightCornerPosition()
+    {
+        return new Vector2(-(EDGE_SIDE_GAP + CORNER_BUTTON_SIZE * 0.5f), -(EDGE_TOP_GAP + CORNER_BUTTON_SIZE * 0.5f));
+    }
+
     // Gives an element its own position, size and scale for portrait screens.
-    private static void AddPortraitLayout(RectTransform rect, Vector2 position, Vector2 size, float scale)
+    private static OrientationLayout AddPortraitLayout(RectTransform rect, Vector2 position, Vector2 size, float scale)
     {
         var layout = rect.gameObject.AddComponent<OrientationLayout>();
         layout.Configure(position, size, scale);
         _portraitLayouts.Add(layout);
+        return layout;
+    }
+
+    // Same, measured from a screen edge in portrait (top or bottom), so the element follows that edge on tall phones.
+    private static void AddPortraitLayout(RectTransform rect, Vector2 position, Vector2 size, float scale, Vector2 anchor)
+    {
+        AddPortraitLayout(rect, position, size, scale).ConfigureAnchor(anchor);
     }
 
     private static void FitText(TMP_Text text, float minSize, float maxSize)

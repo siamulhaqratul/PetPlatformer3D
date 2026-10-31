@@ -55,6 +55,9 @@ public class GameAudio : MonoBehaviour
     [SerializeField] private AudioSource _musicSource;
     [Tooltip("Background music track, looped for the whole session.")]
     [SerializeField] private AudioClip _musicClip;
+    [Tooltip("Music volume with the Music slider at full, so the music sits under the sound effects.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _musicVolume = 0.5f;
 
     [Header("Variation")]
     [Tooltip("How far each effect's pitch may drift up or down, so repeated sounds do not feel mechanical.")]
@@ -99,7 +102,7 @@ public class GameAudio : MonoBehaviour
     {
         if (_musicSource == null) return;
 
-        _musicSource.volume = SoundSettings.BgmVolume;
+        _musicSource.volume = SoundSettings.BgmVolume * _musicVolume;
     }
 
     // ========================= PRIVATE METHODS =======================
@@ -139,22 +142,40 @@ public class GameAudio : MonoBehaviour
 
     // Pausing pauses every sound except the UI's, whose source ignores the listener pause.
     // Jingles only play on the win and fail screens, so leaving them for any other state cuts the jingle.
+    // The music holds while a jingle plays and carries on from the same spot afterwards.
     private void HandleStateChanged(GameState state)
     {
         AudioListener.pause = state == GameState.Paused;
 
         if (state == GameState.Won)
         {
+            PauseMusic();
             PlayJingle(_winJingle);
         }
         else if (state == GameState.Failed)
         {
+            PauseMusic();
             PlayJingle(_failJingle);
         }
         else
         {
             _jingleSource.Stop();
+            ResumeMusic();
         }
+    }
+
+    private void PauseMusic()
+    {
+        if (_musicSource == null) return;
+
+        _musicSource.Pause();
+    }
+
+    private void ResumeMusic()
+    {
+        if (_musicSource == null || _musicSource.clip == null) return;
+
+        _musicSource.UnPause();
     }
 
     private void HandleFormChanged(PetForm form, bool isFromGate)

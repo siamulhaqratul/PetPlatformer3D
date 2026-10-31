@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// Moves, resizes and scales one UI element for portrait screens; its built (landscape) layout is restored otherwise.
+// Moves, resizes, scales and optionally re-anchors one UI element for portrait screens; its built (landscape) layout
+// is restored otherwise.
 [RequireComponent(typeof(RectTransform))]
 public class OrientationLayout : MonoBehaviour
 {
@@ -13,6 +14,10 @@ public class OrientationLayout : MonoBehaviour
     [SerializeField] private Vector2 _portraitSize;
     [Tooltip("Uniform scale used on portrait screens.")]
     [SerializeField] private float _portraitScale = 1f;
+    [Tooltip("Whether portrait uses its own anchor, e.g. the top or bottom edge, so the element follows that edge on tall phones.")]
+    [SerializeField] private bool _hasPortraitAnchor;
+    [Tooltip("Anchor used on portrait screens when Has Portrait Anchor is on; the position is measured from it.")]
+    [SerializeField] private Vector2 _portraitAnchor = new Vector2(0.5f, 0.5f);
 
     // =================== PRIVATE/PROTECTED FIELDS ====================
 
@@ -20,6 +25,8 @@ public class OrientationLayout : MonoBehaviour
     private Vector2 _landscapePosition;
     private Vector2 _landscapeSize;
     private Vector3 _landscapeScale;
+    private Vector2 _landscapeAnchorMin;
+    private Vector2 _landscapeAnchorMax;
     private bool _isInitialized;
 
     // ========================= INITIALIZE METHODS ========================
@@ -31,6 +38,8 @@ public class OrientationLayout : MonoBehaviour
         _landscapePosition = _rect.anchoredPosition;
         _landscapeSize = _rect.sizeDelta;
         _landscapeScale = _rect.localScale;
+        _landscapeAnchorMin = _rect.anchorMin;
+        _landscapeAnchorMax = _rect.anchorMax;
         _isInitialized = true;
     }
 
@@ -43,6 +52,12 @@ public class OrientationLayout : MonoBehaviour
         _portraitScale = portraitScale;
     }
 
+    public void ConfigureAnchor(Vector2 portraitAnchor)
+    {
+        _hasPortraitAnchor = true;
+        _portraitAnchor = portraitAnchor;
+    }
+
     public void Apply(bool isPortrait)
     {
         if (!_isInitialized)
@@ -50,6 +65,9 @@ public class OrientationLayout : MonoBehaviour
             InitializeLayout();
         }
 
+        bool usePortraitAnchor = isPortrait && _hasPortraitAnchor;
+        _rect.anchorMin = usePortraitAnchor ? _portraitAnchor : _landscapeAnchorMin;
+        _rect.anchorMax = usePortraitAnchor ? _portraitAnchor : _landscapeAnchorMax;
         _rect.anchoredPosition = isPortrait ? _portraitPosition : _landscapePosition;
         _rect.sizeDelta = isPortrait ? _portraitSize : _landscapeSize;
         _rect.localScale = isPortrait ? Vector3.one * _portraitScale : _landscapeScale;

@@ -11,17 +11,17 @@ public static class PetFormBuilder
     private const string MODELS_FOLDER = "Assets/_Project/Art/Kenney/CubePets/Models";
     private const string DOG_STATS_PATH = PETS_FOLDER + "/DogMovementStats.asset";
 
-    // Jump for every gate animal but the Bunny: with the 0.8 ledge assist it reaches 4.2, under the Bunny's wall.
+    // Jump for every gate animal but the Bunny, so the Bunny's high jump stands out.
     private const float LOW_JUMP_HEIGHT = 3.4f;
     private const float BUNNY_JUMP_HEIGHT = 5f;
     private const float BUNNY_AIR_CONTROL = 0.65f;
-    // About twice the Dog's sideways speed, so the Cat switches from one outer lane to the other between slalom rows.
+    // About twice the Dog's sideways speed, so the Cat switches lanes almost instantly.
     private const float CAT_STEER_SPEED = 14f;
     private const float CAT_STEER_ACCELERATION = 90f;
     private const float CAT_STEER_DECELERATION = 120f;
-    // Climbs a ledge this far above its feet, so one jump reaches the 6-high cliff.
+    // Climbs a ledge this far above its feet: it runs straight up the 3-high steps without jumping.
     private const float MONKEY_LEDGE_ASSIST_HEIGHT = 3f;
-    // One slide covers about 15 units at run speed, so it clears the 9-unit spike tunnel with room to start early.
+    // One slide covers about 15 units at run speed, three times the Dog's.
     private const float PENGUIN_ROLL_DURATION = 1.8f;
 
     // ========================= STATIC METHODS ========================

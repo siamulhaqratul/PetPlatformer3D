@@ -23,6 +23,8 @@ public static class CourseTestBuilder
     private const string CHECKPOINT_SOUND = AUDIO_FOLDER + "/DigitalAudio/twoTone1.ogg";
     private const string WIN_JINGLE = AUDIO_FOLDER + "/MusicJingles/jingles_NES12.ogg";
     private const string FAIL_JINGLE = AUDIO_FOLDER + "/MusicJingles/jingles_NES13.ogg";
+    // "Retro Game" by The_Mountain, from Pixabay (track 593063), free to use under the Pixabay Content License.
+    private const string MUSIC_TRACK = "Assets/_Project/Audio/Music/RetroGame.mp3";
 
     // ========================= STATIC METHODS ========================
 
@@ -103,13 +105,16 @@ public static class CourseTestBuilder
         serializedEffects.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    // Effects and jingles get separate sources, so an effect's random pitch never bends a jingle.
+    // Effects, jingles and music get separate sources, so an effect's random pitch never bends a jingle or the music.
     private static void BuildGameAudio(GameObject managerObject, GameManager manager, GameObject pet)
     {
         var effectsSource = managerObject.AddComponent<AudioSource>();
         effectsSource.playOnAwake = false;
         var jingleSource = managerObject.AddComponent<AudioSource>();
         jingleSource.playOnAwake = false;
+        var musicSource = managerObject.AddComponent<AudioSource>();
+        musicSource.playOnAwake = false;
+        musicSource.loop = true;
 
         var gameAudio = managerObject.AddComponent<GameAudio>();
         var serializedAudio = new SerializedObject(gameAudio);
@@ -118,6 +123,8 @@ public static class CourseTestBuilder
         serializedAudio.FindProperty("_formController").objectReferenceValue = pet.GetComponent<PetFormController>();
         serializedAudio.FindProperty("_effectsSource").objectReferenceValue = effectsSource;
         serializedAudio.FindProperty("_jingleSource").objectReferenceValue = jingleSource;
+        serializedAudio.FindProperty("_musicSource").objectReferenceValue = musicSource;
+        SetClip(serializedAudio, "_musicClip", MUSIC_TRACK);
         SetClip(serializedAudio, "_jumpClip", JUMP_SOUND);
         SetClip(serializedAudio, "_landClip", LAND_SOUND);
         SetClip(serializedAudio, "_rollClip", ROLL_SOUND);
