@@ -27,6 +27,8 @@ public class UIManager : MonoBehaviour
     private const float TOAST_POP_SCALE = 0.7f;
     private const float FAIL_BAR_DELAY = 0.3f;
     private const float FAIL_BAR_DURATION = 0.8f;
+    private const float SCORE_COUNT_DELAY = 0.3f;
+    private const float SCORE_COUNT_DURATION = 0.9f;
     private const float HALFWAY_PROGRESS = 0.45f;
     private const float CLOSE_PROGRESS = 0.8f;
     private const string EARLY_FAIL_MESSAGE = "Good start! Try again.";
@@ -97,6 +99,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform _playButtonPulse;
     [Tooltip("Stars showing the best result so far.")]
     [SerializeField] private Image[] _bestStars;
+    [Tooltip("Best score so far, under the best stars.")]
+    [SerializeField] private TMP_Text _bestScoreText;
     [Tooltip("Sprite for an earned star.")]
     [SerializeField] private Sprite _starFullSprite;
     [Tooltip("Sprite for a star not yet earned.")]
@@ -125,6 +129,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform _newBestBadge;
     [Tooltip("Coins collected on the win screen.")]
     [SerializeField] private TMP_Text _winCoinText;
+    [Tooltip("Run score on the win screen, counted up when it appears.")]
+    [SerializeField] private TMP_Text _winScoreText;
     [Tooltip("Checkboxes for finishing, collecting coins and losing no lives, in star order.")]
     [SerializeField] private Image[] _objectiveChecks;
     [Tooltip("Label of the coin objective, filled with the coins needed.")]
@@ -145,6 +151,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform _failProgressFill;
     [Tooltip("Coins collected on the fail screen.")]
     [SerializeField] private TMP_Text _failCoinText;
+    [Tooltip("Run score on the fail screen, counted up when it appears.")]
+    [SerializeField] private TMP_Text _failScoreText;
     [Tooltip("Retries the course from the fail screen.")]
     [SerializeField] private Button _failRetryButton;
     [Tooltip("Returns to the title from the fail screen.")]
@@ -204,7 +212,7 @@ public class UIManager : MonoBehaviour
         _coinObjectiveText.text = $"COLLECT {_gameManager.CoinsForStar} COINS";
         StartIdleAnimations();
         UpdateLives(_gameManager.Lives, false);
-        SetCoins(_gameManager.CoinsCollected, _gameManager.TotalCoins);
+        SetCoins(_gameManager.CoinsCollected);
         ShowScreensFor(_gameManager.State);
     }
 
@@ -289,7 +297,7 @@ public class UIManager : MonoBehaviour
     private void HandleCoinsChanged(int collected, int total)
     {
         bool isPickup = collected > _shownCoins;
-        SetCoins(collected, total);
+        SetCoins(collected);
 
         if (!isPickup) return;
 
@@ -312,15 +320,18 @@ public class UIManager : MonoBehaviour
             case GameState.Start:
                 UpdateControlHints();
                 ShowBestStars(_gameManager.BestStars);
+                _bestScoreText.text = _gameManager.BestScore.ToString();
                 SetProgress(0f);
                 break;
             case GameState.Won:
                 PlayStars(_gameManager.EarnedStars);
                 PlayObjectives(true, _gameManager.HasCoinStar, _gameManager.LivesLost == 0);
-                PlayNewBestBadge(_gameManager.IsNewBest);
+                PlayNewBestBadge(_gameManager.IsNewBest || _gameManager.IsNewBestScore);
+                PlayScore(_winScoreText, _gameManager.Score);
                 break;
             case GameState.Failed:
                 PlayFailProgress(_gameManager.FurthestProgress);
+                PlayScore(_failScoreText, _gameManager.Score);
                 break;
         }
     }
@@ -339,13 +350,27 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void SetCoins(int collected, int total)
+    private void SetCoins(int collected)
     {
-        string coins = $"{collected} OF {total}";
-        _coinText.text = collected.ToString();
+        string coins = collected.ToString();
+        _coinText.text = coins;
         _winCoinText.text = coins;
         _failCoinText.text = coins;
         _shownCoins = collected;
+    }
+
+    // Counts the score up from zero, on unscaled time like the rest of the result screens.
+    private void PlayScore(TMP_Text scoreText, int score)
+    {
+        scoreText.DOKill();
+        scoreText.text = "0";
+        int shownScore = 0;
+        DOTween.To(() => shownScore, value =>
+            {
+                shownScore = value;
+                scoreText.text = value.ToString();
+            }, score, SCORE_COUNT_DURATION)
+            .SetDelay(SCORE_COUNT_DELAY).SetEase(Ease.OutCubic).SetUpdate(true).SetTarget(scoreText);
     }
 
     private void SetProgress(float progress)

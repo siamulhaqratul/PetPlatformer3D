@@ -29,6 +29,19 @@ public static class UIBuilder
     private const float DOUBLE_SPRITE_PPU_MULTIPLIER = 2f;
     private const float RIBBON_TEXT_PADDING = 90f;
     private const float RIBBON_MIN_FONT_SIZE = 40f;
+    // Every label may shrink to this share of its font size, so text never spills out of its box.
+    private const float MIN_FONT_SCALE = 0.6f;
+    // Button labels: the gap after the icon and the space kept clear at each end, as shares of the button height.
+    private const float BUTTON_ICON_GAP = 0.12f;
+    private const float BUTTON_TEXT_PADDING = 0.3f;
+    private const float OBJECTIVE_CHECK_SIZE = 56f;
+    private const float OBJECTIVE_TEXT_WIDTH = 440f;
+    private const float OBJECTIVE_GAP = 20f;
+    private const float COIN_ROW_GAP = 18f;
+    private const float RESULT_COIN_SIZE = 70f;
+    // Space between the coin count and the score on a result row.
+    private const float RESULT_GROUP_GAP = 60f;
+    private const float PILL_TEXT_PADDING = 25f;
 
     private const string BLUE = "Blue";
     private const string GREEN = "Green";
@@ -80,12 +93,15 @@ public static class UIBuilder
     private const string SLIDER_FILL = "slide_horizontal_color";
     // A blue disc with a white ring, matching the blue fill.
     private const string SLIDER_KNOB = "check_round_round_circle";
-    private const float SETTINGS_LABEL_X = -215f;
-    private const float SETTINGS_CONTROL_X = 120f;
+    // Settings rows: a left-aligned label column and a control column, each 50 in from the card's sides.
+    private const float SETTINGS_LABEL_X = -210f;
+    private const float SETTINGS_LABEL_WIDTH = 280f;
+    private const float SETTINGS_CONTROL_X = 160f;
     private const float GEAR_ICON_SIZE = 58f;
 
     private static readonly Vector2 _referenceResolution = new Vector2(1920f, 1080f);
-    private static readonly Vector2 _menuButtonSize = new Vector2(480f, 124f);
+    private static readonly Vector2 _menuButtonSize = new Vector2(500f, 124f);
+    private static readonly Vector2 _bestPillSize = new Vector2(460f, 100f);
     private static readonly Color _darkText = new Color(0.22f, 0.24f, 0.32f);
     private static readonly Color _outlineColor = new Color(0.12f, 0.13f, 0.2f);
     private static readonly Vector2 _hudBarSize = new Vector2(600f, 54f);
@@ -212,7 +228,8 @@ public static class UIBuilder
         PetFormBuilder.EnsureForms(out PetForm dog, out _, out _, out _, out _);
         Image badge = CreatePill("FormBadge", parent, TopLeftPosition(_formBadgeSize, _hudPillSize.y + HUD_ROW_GAP), _formBadgeSize, TextAnchor.UpperLeft);
         Image icon = CreateImage("Icon", badge.rectTransform, dog.Icon, new Vector2(-100f, 6f), new Vector2(84f, 84f));
-        TMP_Text name = CreateText("Name", badge.rectTransform, dog.DisplayName, 44f, _darkText, new Vector2(40f, 6f), new Vector2(190f, 70f), false);
+        // Between the icon and the badge's right edge; 36 fits the longest name, PENGUIN, at full size.
+        TMP_Text name = CreateText("Name", badge.rectTransform, dog.DisplayName, 36f, _darkText, new Vector2(46f, 6f), new Vector2(188f, 70f), false);
         Set(manager, "_formIcon", icon);
         Set(manager, "_formNameText", name);
     }
@@ -231,8 +248,9 @@ public static class UIBuilder
         Image ribbon = CreateImage("Ribbon", toast, LoadSprite(YELLOW, BUTTON), Vector2.zero, _toastSize);
         ribbon.type = Image.Type.Sliced;
         Image icon = CreateImage("Icon", toast, null, new Vector2(-_toastSize.x * 0.5f + 90f, 12f), new Vector2(150f, 150f));
-        TMP_Text name = CreateText("Name", toast, "BUNNY!", 70f, Color.white, new Vector2(70f, 32f), new Vector2(620f, 90f), true);
-        TMP_Text ability = CreateText("Ability", toast, "Super high jump!", 38f, Color.white, new Vector2(70f, -38f), new Vector2(620f, 60f), true);
+        // Text fills the space right of the icon, 20 in from the ribbon's edge.
+        TMP_Text name = CreateText("Name", toast, "BUNNY!", 70f, Color.white, new Vector2(80f, 32f), new Vector2(640f, 90f), true);
+        TMP_Text ability = CreateText("Ability", toast, "Super high jump!", 38f, Color.white, new Vector2(80f, -38f), new Vector2(640f, 60f), true);
 
         Set(manager, "_formToast", group);
         Set(manager, "_toastIcon", icon);
@@ -302,16 +320,27 @@ public static class UIBuilder
         Button play = CreateButton("PlayButton", pulse, "PLAY", GREEN, BUTTON, Vector2.zero, new Vector2(480f, 150f), 76f, LoadSprite(EXTRA, ICON_PLAY), TextAnchor.MiddleCenter, true);
         Set(manager, "_playButton", play);
 
-        Image bestPill = CreatePill("BestPill", content, new Vector2(0f, -40f), new Vector2(420f, 100f));
+        // Best stars, with the best score in a matching pill under them.
+        Image bestPill = CreatePill("BestPill", content, new Vector2(0f, 20f), _bestPillSize);
         AddPortraitLayout(bestPill.rectTransform, new Vector2(0f, 40f), bestPill.rectTransform.sizeDelta, PORTRAIT_MENU_SCALE);
-        CreateText("BestLabel", bestPill.rectTransform, "BEST", 40f, _darkText, new Vector2(-125f, 4f), new Vector2(140f, 60f), false);
+        CreateText("BestLabel", bestPill.rectTransform, "BEST", 40f, _darkText, new Vector2(-145f, 4f), new Vector2(140f, 60f), false);
         var bestStars = new Image[3];
         for (int index = 0; index < bestStars.Length; index++)
         {
-            bestStars[index] = CreateImage($"BestStar_{index}", bestPill.rectTransform, LoadSprite(YELLOW, STAR_SLOT), new Vector2(5f + index * 78f, 4f), new Vector2(66f, 62f));
+            bestStars[index] = CreateImage($"BestStar_{index}", bestPill.rectTransform, LoadSprite(YELLOW, STAR_SLOT), new Vector2(25f + index * 78f, 4f), new Vector2(66f, 62f));
         }
 
         SetArray(manager, "_bestStars", bestStars);
+
+        var scorePillSize = new Vector2(_bestPillSize.x, 80f);
+        Image scorePill = CreatePill("BestScorePill", content, new Vector2(0f, -75f), scorePillSize);
+        AddPortraitLayout(scorePill.rectTransform, new Vector2(0f, -90f), scorePillSize, PORTRAIT_MENU_SCALE);
+        float pillInnerHalf = scorePillSize.x * 0.5f - PILL_TEXT_PADDING;
+        TMP_Text scoreLabel = CreateText("Label", scorePill.rectTransform, "BEST SCORE", 30f, _darkText, new Vector2(-pillInnerHalf + 130f, 3f), new Vector2(260f, 60f), false);
+        scoreLabel.alignment = TextAlignmentOptions.Left;
+        TMP_Text bestScore = CreateText("Value", scorePill.rectTransform, "0", 40f, _darkText, new Vector2(pillInnerHalf - 75f, 3f), new Vector2(150f, 60f), false);
+        bestScore.alignment = TextAlignmentOptions.Right;
+        Set(manager, "_bestScoreText", bestScore);
         Set(manager, "_keyboardHints", BuildKeyboardHints(content));
         Set(manager, "_touchHints", BuildTouchHints(content));
     }
@@ -389,7 +418,7 @@ public static class UIBuilder
     private static void BuildSettingsScreen(Transform root, SerializedObject manager)
     {
         UIScreen screen = CreateScreen("SettingsScreen", root, _dimColor, out RectTransform content);
-        RectTransform card = CreateCard(content, BLUE, "SETTINGS", new Vector2(760f, 620f));
+        RectTransform card = CreateCard(content, BLUE, "SETTINGS", new Vector2(800f, 620f));
 
         // Not "SOUND FX": in Kenney Future the X reads as an H at this size.
         CreateSettingsLabel(card, "EFFECTS", 150f);
@@ -459,7 +488,8 @@ public static class UIBuilder
         SetArray(manager, "_objectiveChecks", checks);
         Set(manager, "_coinObjectiveText", coinObjective);
 
-        Set(manager, "_winCoinText", CreateCoinRow(card, new Vector2(0f, -115f)));
+        Set(manager, "_winCoinText", CreateResultRow(card, new Vector2(0f, -115f), out TMP_Text winScore));
+        Set(manager, "_winScoreText", winScore);
         CreateDivider(card, new Vector2(0f, -175f), 640f);
         Set(manager, "_winRetryButton", CreateButton("PlayAgainButton", card, "PLAY AGAIN", GREEN, BUTTON, new Vector2(0f, -250f), new Vector2(540f, 105f), 50f, LoadSprite(EXTRA, ICON_REPEAT), TextAnchor.MiddleCenter, true));
         Set(manager, "_winHomeButton", CreateButton("HomeButton", card, "HOME", BLUE, BUTTON, new Vector2(0f, -368f), new Vector2(540f, 105f), 50f, LoadSprite(GREY, ARROW_LEFT)));
@@ -471,14 +501,17 @@ public static class UIBuilder
         Set(manager, "_failScreen", screen);
         RectTransform card = CreateCard(content, RED, "OUT OF LIVES", new Vector2(820f, 780f));
         CreateInset(card, new Vector2(0f, 110f), new Vector2(700f, 300f));
-        CreateDivider(card, new Vector2(0f, -50f), 640f);
+        // Midway between the inset's bottom edge (-40) and the top of the Retry button (-73).
+        CreateDivider(card, new Vector2(0f, -57f), 640f);
 
-        Set(manager, "_failMessageText", CreateText("Message", card, "So close! Try again.", 44f, _darkText, new Vector2(0f, 215f), new Vector2(660f, 70f), false));
-        CreateText("ProgressLabel", card, "HOW FAR YOU GOT", 32f, _darkText, new Vector2(0f, 150f), new Vector2(760f, 50f), false);
+        // 40 in from each side of the inset; the longer messages shrink a little to fit.
+        Set(manager, "_failMessageText", CreateText("Message", card, "So close! Try again.", 40f, _darkText, new Vector2(0f, 215f), new Vector2(620f, 70f), false));
+        CreateText("ProgressLabel", card, "HOW FAR YOU GOT", 32f, _darkText, new Vector2(0f, 150f), new Vector2(620f, 50f), false);
         RectTransform failFill = CreateProgressBar("ProgressBar", card, new Vector2(-25f, 98f), _failBarSize, RED, TextAnchor.MiddleCenter, out RectTransform failTrack);
         Set(manager, "_failProgressFill", failFill);
         CreateImage("GoalStar", failTrack, LoadSprite(YELLOW, STAR), new Vector2(_failBarSize.x * 0.5f + 32f, 4f), new Vector2(62f, 58f));
-        Set(manager, "_failCoinText", CreateCoinRow(card, new Vector2(0f, 20f)));
+        Set(manager, "_failCoinText", CreateResultRow(card, new Vector2(0f, 20f), out TMP_Text failScore));
+        Set(manager, "_failScoreText", failScore);
         Set(manager, "_failRetryButton", CreateButton("RetryButton", card, "RETRY", GREEN, BUTTON, new Vector2(0f, -135f), new Vector2(540f, 124f), 54f, LoadSprite(EXTRA, ICON_REPEAT), TextAnchor.MiddleCenter, true));
         Set(manager, "_failHomeButton", CreateButton("HomeButton", card, "HOME", BLUE, BUTTON, new Vector2(0f, -270f), new Vector2(540f, 124f), 54f, LoadSprite(GREY, ARROW_LEFT)));
     }
@@ -501,17 +534,21 @@ public static class UIBuilder
         return card.rectTransform;
     }
 
+    // A checkbox and its label, as one block centred on the position, so the list sits in the middle of the card.
     private static Image CreateObjective(RectTransform parent, string label, Vector2 position, out TMP_Text labelText)
     {
-        Image check = CreateImage($"Check_{label}", parent, LoadSprite(GREY, CHECK_OFF), position + new Vector2(-230f, 0f), new Vector2(56f, 56f));
-        labelText = CreateText($"Objective_{label}", parent, label, 36f, _darkText, position + new Vector2(50f, 2f), new Vector2(480f, 60f), false);
+        float blockLeft = -(OBJECTIVE_CHECK_SIZE + OBJECTIVE_GAP + OBJECTIVE_TEXT_WIDTH) * 0.5f;
+        float checkX = blockLeft + OBJECTIVE_CHECK_SIZE * 0.5f;
+        float textX = blockLeft + OBJECTIVE_CHECK_SIZE + OBJECTIVE_GAP + OBJECTIVE_TEXT_WIDTH * 0.5f;
+        Image check = CreateImage($"Check_{label}", parent, LoadSprite(GREY, CHECK_OFF), position + new Vector2(checkX, 0f), Vector2.one * OBJECTIVE_CHECK_SIZE);
+        labelText = CreateText($"Objective_{label}", parent, label, 36f, _darkText, position + new Vector2(textX, 2f), new Vector2(OBJECTIVE_TEXT_WIDTH, 60f), false);
         labelText.alignment = TextAlignmentOptions.Left;
         return check;
     }
 
     private static void CreateSettingsLabel(RectTransform parent, string label, float y)
     {
-        TMP_Text text = CreateText($"Label_{label}", parent, label, 40f, _darkText, new Vector2(SETTINGS_LABEL_X, y + 4f), new Vector2(240f, 70f), false);
+        TMP_Text text = CreateText($"Label_{label}", parent, label, 40f, _darkText, new Vector2(SETTINGS_LABEL_X, y + 4f), new Vector2(SETTINGS_LABEL_WIDTH, 70f), false);
         text.alignment = TextAlignmentOptions.Left;
     }
 
@@ -583,10 +620,37 @@ public static class UIBuilder
         return button;
     }
 
-    private static TMP_Text CreateCoinRow(RectTransform parent, Vector2 position)
+    // Coin icon and count, then the run's score; the layout group keeps the row centred as the numbers change width.
+    private static TMP_Text CreateResultRow(RectTransform parent, Vector2 position, out TMP_Text scoreText)
     {
-        CreateImage("CoinIcon", parent, LoadSprite(YELLOW, ROUND_BUTTON), position + new Vector2(-170f, 2f), new Vector2(70f, 70f));
-        TMP_Text text = CreateText("Coins", parent, "0 OF 0", 56f, _darkText, position + new Vector2(55f, 0f), new Vector2(360f, 80f), false);
+        RectTransform row = CreateRect("ResultRow", parent);
+        row.anchoredPosition = position;
+        row.sizeDelta = new Vector2(660f, 80f);
+        var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+        layout.spacing = COIN_ROW_GAP;
+        layout.childAlignment = TextAnchor.MiddleCenter;
+        layout.childControlWidth = true;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        Image icon = CreateImage("CoinIcon", row, LoadSprite(YELLOW, ROUND_BUTTON), Vector2.zero, Vector2.one * RESULT_COIN_SIZE);
+        icon.gameObject.AddComponent<LayoutElement>().preferredWidth = RESULT_COIN_SIZE;
+        TMP_Text coinText = CreateRowText("Coins", row, "0", 56f);
+
+        RectTransform spacer = CreateRect("Spacer", row);
+        spacer.gameObject.AddComponent<LayoutElement>().preferredWidth = RESULT_GROUP_GAP - COIN_ROW_GAP * 2f;
+
+        CreateRowText("ScoreLabel", row, "SCORE", 36f);
+        scoreText = CreateRowText("Score", row, "0", 56f);
+        return coinText;
+    }
+
+    // Text in a layout row, which sizes it to its words, so it never needs to shrink.
+    private static TMP_Text CreateRowText(string name, RectTransform row, string value, float fontSize)
+    {
+        TMP_Text text = CreateText(name, row, value, fontSize, _darkText, Vector2.zero, new Vector2(200f, 80f), false);
+        text.enableAutoSizing = false;
         text.alignment = TextAlignmentOptions.Left;
         return text;
     }
@@ -695,6 +759,8 @@ public static class UIBuilder
     private static void CreateHintLabel(RectTransform row, string label, float trailingSpace)
     {
         TMP_Text text = CreateText($"Hint_{label}", row, label, 38f, Color.white, Vector2.zero, new Vector2(200f, 80f), true);
+        // Sized to its text, and the whole row scales to fit, so the label itself never shrinks.
+        text.enableAutoSizing = false;
         text.GetComponent<RectTransform>().sizeDelta = new Vector2(text.preferredWidth, 80f);
 
         if (trailingSpace <= 0f) return;
@@ -796,15 +862,21 @@ public static class UIBuilder
             AddShine(image.rectTransform, size);
         }
 
-        float labelOffset = 0f;
+        // The label fills the face between the icon (if any) and the right end, and is centred in that space,
+        // so a long word shrinks instead of running under the icon.
+        float labelLeft = -size.x * 0.5f + size.y * BUTTON_TEXT_PADDING;
+        float labelRight = size.x * 0.5f - size.y * BUTTON_TEXT_PADDING;
         if (icon != null)
         {
-            float iconSize = size.y * 0.42f;
-            CreateImage("Icon", image.rectTransform, icon, new Vector2(-size.x * 0.5f + size.y * 0.55f, 5f), new Vector2(iconSize * icon.rect.width / icon.rect.height, iconSize));
-            labelOffset = size.y * 0.3f;
+            float iconHeight = size.y * 0.42f;
+            float iconWidth = iconHeight * icon.rect.width / icon.rect.height;
+            float iconX = -size.x * 0.5f + size.y * 0.55f;
+            CreateImage("Icon", image.rectTransform, icon, new Vector2(iconX, 5f), new Vector2(iconWidth, iconHeight));
+            labelLeft = iconX + iconWidth * 0.5f + size.y * BUTTON_ICON_GAP;
         }
 
-        TMP_Text text = CreateText("Label", image.rectTransform, label, fontSize, Color.white, new Vector2(labelOffset, 6f), size, true);
+        var labelSize = new Vector2(labelRight - labelLeft, size.y);
+        CreateText("Label", image.rectTransform, label, fontSize, Color.white, new Vector2((labelLeft + labelRight) * 0.5f, 6f), labelSize, true);
         return button;
     }
 
@@ -837,6 +909,7 @@ public static class UIBuilder
         text.alignment = TextAlignmentOptions.Center;
         text.enableWordWrapping = false;
         text.raycastTarget = false;
+        FitText(text, fontSize * MIN_FONT_SCALE, fontSize);
 
         if (hasOutline)
         {

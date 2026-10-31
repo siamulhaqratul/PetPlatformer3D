@@ -54,9 +54,10 @@ public static class PetFormBuilder
 
         dog = LoadOrCreateForm("Dog", "animal-dog", dogStats, "Balanced run and jump", "Balanced run and jump");
         bunny = LoadOrCreateForm("Bunny", "animal-bunny", bunnyStats, "Super high jump!", "Super high jump!");
-        cat = LoadOrCreateForm("Cat", "animal-cat", catStats, "Lightning-fast lane switching", "Lightning-fast lane switching");
-        monkey = LoadOrCreateForm("Monkey", "animal-monkey", monkeyStats, "Jump at tall ledges to climb", "Jump at tall ledges to climb");
-        penguin = LoadOrCreateForm("Penguin", "animal-penguin", penguinStats, "Press S for a long belly slide", "Swipe down for a long belly slide");
+        // Ability lines stay short enough to fit the gate banner at full size.
+        cat = LoadOrCreateForm("Cat", "animal-cat", catStats, "Super-fast lane changes", "Super-fast lane changes");
+        monkey = LoadOrCreateForm("Monkey", "animal-monkey", monkeyStats, "Climbs tall ledges", "Climbs tall ledges");
+        penguin = LoadOrCreateForm("Penguin", "animal-penguin", penguinStats, "Press S for a long slide", "Swipe down for a long slide");
     }
 
     public static string ModelPath(string modelName)

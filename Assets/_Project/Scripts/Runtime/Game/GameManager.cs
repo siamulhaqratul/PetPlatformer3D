@@ -13,6 +13,11 @@ public class GameManager : MonoBehaviour
     private const int NO_DAMAGE_STARS = 1;
     private const int COIN_STARS = 1;
     private const string BEST_STARS_KEY = "BestStars";
+    private const string BEST_SCORE_KEY = "BestScore";
+    // Score: up to 1000 for distance, 25 a coin and 250 for each life left at the flag, so a perfect run scores 3325.
+    private const int DISTANCE_POINTS = 1000;
+    private const int COIN_POINTS = 25;
+    private const int LIFE_POINTS = 250;
     // The coin target is rounded down to a multiple of this, so the win screen asks for a round number.
     private const int COIN_TARGET_STEP = 5;
 
@@ -76,6 +81,8 @@ public class GameManager : MonoBehaviour
     private int _coinsCollected;
     private float _furthestProgress;
     private bool _isNewBest;
+    private int _score;
+    private bool _isNewBestScore;
 
     // ========================= INITIALIZE METHODS ========================
 
@@ -107,6 +114,10 @@ public class GameManager : MonoBehaviour
     public int TotalCoins => _totalCoins;
     public int BestStars => PlayerPrefs.GetInt(BEST_STARS_KEY, 0);
     public bool IsNewBest => _isNewBest;
+    // The run's final score, set when it is won or failed.
+    public int Score => _score;
+    public int BestScore => PlayerPrefs.GetInt(BEST_SCORE_KEY, 0);
+    public bool IsNewBestScore => _isNewBestScore;
     public float FurthestProgress => _furthestProgress;
     public float CourseProgress => Mathf.Clamp01(Mathf.InverseLerp(_spawnPoint.position.z, _finishPoint.position.z, _petTransform.position.z));
     // 80% of 63 coins is 50.4, which rounds down to 50. Never below one step, so a course with few coins still needs some.
@@ -221,6 +232,8 @@ public class GameManager : MonoBehaviour
         _coinsCollected = 0;
         _furthestProgress = 0f;
         _isNewBest = false;
+        _score = 0;
+        _isNewBestScore = false;
         _checkpointPosition = _spawnPoint.position;
         _checkpointForm = _formController.StartForm;
         _formController.SetFormSilently(_checkpointForm);
@@ -255,6 +268,19 @@ public class GameManager : MonoBehaviour
         if (!_isNewBest) return;
 
         PlayerPrefs.SetInt(BEST_STARS_KEY, EarnedStars);
+        PlayerPrefs.Save();
+    }
+
+    private void FinishScore(bool hasWon)
+    {
+        float distance = hasWon ? 1f : _furthestProgress;
+        int lifeBonus = hasWon ? _lives * LIFE_POINTS : 0;
+        _score = Mathf.RoundToInt(distance * DISTANCE_POINTS) + _coinsCollected * COIN_POINTS + lifeBonus;
+
+        _isNewBestScore = _score > BestScore;
+        if (!_isNewBestScore) return;
+
+        PlayerPrefs.SetInt(BEST_SCORE_KEY, _score);
         PlayerPrefs.Save();
     }
 
@@ -306,6 +332,7 @@ public class GameManager : MonoBehaviour
         if (_lives <= 0)
         {
             _loseLifeRoutine = null;
+            FinishScore(false);
             SetState(GameState.Failed);
             yield break;
         }
@@ -354,6 +381,7 @@ public class GameManager : MonoBehaviour
         _visual.PlayDance();
         Vibration.Medium();
         SaveBestStars();
+        FinishScore(true);
         SetState(GameState.Won);
     }
 

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: CatForm
   m_EditorClassIdentifier: 
   _displayName: CAT
-  _abilityText: Lightning-fast lane switching
-  _touchAbilityText: Lightning-fast lane switching
+  _abilityText: Super-fast lane changes
+  _touchAbilityText: Super-fast lane changes
   _icon: {fileID: 21300000, guid: d183caedef3fb0d428ace81492e6a49b, type: 3}
   _modelPrefab: {fileID: 919132149155446097, guid: 03588ffd0adadfe48a91d9ff7090d666, type: 3}
   _animatorController: {fileID: 9100000, guid: b60892f0ff84fbb43831b7a16b76476d, type: 2}

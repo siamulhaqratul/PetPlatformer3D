@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: PenguinForm
   m_EditorClassIdentifier: 
   _displayName: PENGUIN
-  _abilityText: Press S for a long belly slide
-  _touchAbilityText: Swipe down for a long belly slide
+  _abilityText: Press S for a long slide
+  _touchAbilityText: Swipe down for a long slide
   _icon: {fileID: 21300000, guid: a9fa27e6b514e8f47893636026da49c5, type: 3}
   _modelPrefab: {fileID: 919132149155446097, guid: 48f5394beaa362e4ca372c8c7d3345f8, type: 3}
   _animatorController: {fileID: 9100000, guid: 39c579b4e76c04140b8d174e7eb4e592, type: 2}

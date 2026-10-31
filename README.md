@@ -9,24 +9,30 @@ A small 3D platformer prototype starring a cube pet, made for the Nagorik Junior
 
 ## How to play
 
-Pet Shift Run: the pet runs forward on its own. Steer between the two lanes, jump the gaps and spikes, and pick an animal at each gate pair. Reach the finish flag with 3 lives. You earn a star for finishing, a star for collecting enough coins, and a star for losing no lives.
+Pet Shift Run: the pet runs forward on its own. Steer between the two lanes, jump the gaps and spikes, and pick an animal at each of the two gate pairs. Reach the finish flag with 3 lives.
 
 | Action | Keyboard / gamepad | Touch |
 | --- | --- | --- |
 | Steer | A / D, Left / Right, left stick | Swipe left / right |
-| Jump (hold to glide as the Bee) | Space, W, Up, South button | Swipe up |
+| Jump (hold for a higher jump) | Space, W, Up, South button | Swipe up |
 | Roll / duck | S, Down, East button | Swipe down |
 | Pause | Esc, P, Start | Pause button |
 
-| Animal | Ability |
-| --- | --- |
-| Dog | Start form, balanced run and jump |
-| Bunny | High jump |
-| Bee | Hold jump to glide |
+| Animal | Where | Ability |
+| --- | --- | --- |
+| Dog | Start form | Balanced run and jump |
+| Bunny | Gate 1 | High jump |
+| Cat | Gate 1 | Fast lane changes |
+| Monkey | Gate 2 | Climbs tall ledges without jumping |
+| Penguin | Gate 2 | Long belly slide |
+
+**Stars:** one for reaching the flag, one for collecting 50 of the 63 coins, one for losing no lives. The best star count is saved.
+
+**Score:** up to 1000 for distance, 25 per coin and 250 for each life left at the flag, so a perfect run scores 3325. The best score is saved and shown on the title screen.
 
 ## What was cut
 
-The plan had five animals. The Elephant (smashing crate walls) and the Penguin (sliding on snow) were cut, so the time could go into making jumping and the three remaining animals feel good.
+The plan had a Bee (glide) and an Elephant (smashing crate walls). Both needed new movement code, so they were cut. Every gate animal is the Dog with one strength turned up, which left time for the jump feel, the course and the UI.
 
 ## Project layout
 
@@ -47,5 +53,6 @@ Assets/
 
 ## Credits
 
-- 3D models, UI, fonts and sounds: [Kenney](https://kenney.nl) (CC0): Cube Pets, Platformer Kit, UI Pack
+- 3D models, UI, fonts and sounds: [Kenney](https://kenney.nl) (CC0): Cube Pets, Platformer Kit, UI Pack, Digital Audio, Impact Sounds, Music Jingles
+- Music: "Retro Game" by The_Mountain, from [Pixabay](https://pixabay.com) (Pixabay Content License)
 - Tweening: [DOTween](http://dotween.demigiant.com) by Demigiant

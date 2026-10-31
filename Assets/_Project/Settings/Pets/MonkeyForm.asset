@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: MonkeyForm
   m_EditorClassIdentifier: 
   _displayName: MONKEY
-  _abilityText: Jump at tall ledges to climb
-  _touchAbilityText: Jump at tall ledges to climb
+  _abilityText: Climbs tall ledges
+  _touchAbilityText: Climbs tall ledges
   _icon: {fileID: 21300000, guid: cd0130a23d813f441b3ccfd2fd7012af, type: 3}
   _modelPrefab: {fileID: 919132149155446097, guid: 160f9d0609650fc48afc8123e2f52a2a, type: 3}
   _animatorController: {fileID: 9100000, guid: bbd03bb88a2576446827f0722737d66e, type: 2}
