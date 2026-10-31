@@ -1,7 +1,6 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
@@ -216,6 +215,12 @@ public class UIManager : MonoBehaviour
         ShowScreensFor(_gameManager.State);
     }
 
+    // =========================== PROPERTIES ==========================
+
+    // Phones and tablets, mobile browsers included, get touch hints; desktops get keyboard hints. Desktop Chrome
+    // reports a touchscreen to the web build, so checking for one would show swipe hints to keyboard players.
+    private static bool UsesTouchControls => Application.isMobilePlatform;
+
     // ======================= UNITY CALLBACKS =========================
 
     private void Start()
@@ -229,7 +234,6 @@ public class UIManager : MonoBehaviour
         _gameManager.OnLivesChanged += HandleLivesChanged;
         _gameManager.OnCoinsChanged += HandleCoinsChanged;
         _formController.OnFormChanged += HandleFormChanged;
-        InputSystem.onDeviceChange += HandleDeviceChange;
     }
 
     private void OnDisable()
@@ -238,7 +242,6 @@ public class UIManager : MonoBehaviour
         _gameManager.OnLivesChanged -= HandleLivesChanged;
         _gameManager.OnCoinsChanged -= HandleCoinsChanged;
         _formController.OnFormChanged -= HandleFormChanged;
-        InputSystem.onDeviceChange -= HandleDeviceChange;
     }
 
     private void Update()
@@ -461,10 +464,9 @@ public class UIManager : MonoBehaviour
 
     private void ShowFormToast(PetForm form)
     {
-        bool hasTouchscreen = Touchscreen.current != null;
         _toastIcon.sprite = form.Icon;
         _toastNameText.text = $"{form.DisplayName}!";
-        _toastAbilityText.text = hasTouchscreen ? form.TouchAbilityText : form.AbilityText;
+        _toastAbilityText.text = UsesTouchControls ? form.TouchAbilityText : form.AbilityText;
 
         Transform toastTransform = _formToast.transform;
         _formToast.DOKill();
@@ -479,19 +481,10 @@ public class UIManager : MonoBehaviour
         toast.Append(_formToast.DOFade(0f, TOAST_FADE_DURATION * 1.5f));
     }
 
-    // Touch hints whenever a touchscreen exists (phones, tablets, touch laptops); keyboard hints otherwise.
     private void UpdateControlHints()
     {
-        bool hasTouchscreen = Touchscreen.current != null;
-        _keyboardHints.SetActive(!hasTouchscreen);
-        _touchHints.SetActive(hasTouchscreen);
-    }
-
-    private void HandleDeviceChange(InputDevice device, InputDeviceChange change)
-    {
-        if (device is not Touchscreen) return;
-
-        UpdateControlHints();
+        _keyboardHints.SetActive(!UsesTouchControls);
+        _touchHints.SetActive(UsesTouchControls);
     }
 
     private void PlayFailProgress(float progress)
