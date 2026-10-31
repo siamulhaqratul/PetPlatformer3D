@@ -31,9 +31,15 @@ public static class SoundSettings
 
     // ========================= STATIC METHODS ========================
 
+    // Writes the volumes to disk. Called once when the settings panel closes rather than on every slider step,
+    // because a WebGL save writes to the browser's storage.
+    public static void Save()
+    {
+        PlayerPrefs.Save();
+    }
+
     private static void SaveVolume(string key, float volume)
     {
         PlayerPrefs.SetFloat(key, Mathf.Clamp01(volume));
-        PlayerPrefs.Save();
     }
 }

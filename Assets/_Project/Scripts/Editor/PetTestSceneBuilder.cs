@@ -34,11 +34,11 @@ public static class PetTestSceneBuilder
     private static void BuildPetTestSetup()
     {
         PetMovementStats stats = LoadOrCreateDogStats();
-        PetFormBuilder.EnsureForms(out PetForm dog, out PetForm bunny, out PetForm bee);
+        PetFormBuilder.EnsureForms(out PetForm dog, out PetForm bunny, out PetForm cat, out PetForm monkey, out PetForm penguin);
         GameObject pet = BuildPet(stats, dog);
         DestroyExisting(GREYBOX_NAME);
         CinemachineVirtualCamera followCamera = BuildCamera(pet.transform);
-        LevelBuilder.ConfigureForms(pet.GetComponent<PetFormController>(), bunny, bee);
+        LevelBuilder.ConfigureForms(pet.GetComponent<PetFormController>(), bunny, cat, monkey, penguin);
         CourseTestBuilder.BuildGameSystems(pet, followCamera);
         UIBuilder.BuildUI();
 

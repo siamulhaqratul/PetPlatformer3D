@@ -1,7 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 
-// Creates the Dog, Bunny and Bee forms: each with its Cube Pets model, animator, icon and movement stats.
+// Creates the Dog, Bunny, Cat, Monkey and Penguin forms: each with its Cube Pets model, animator, icon and movement stats.
+// Every gate animal is the Dog's stats with one strength turned up and a lower jump, so the strengths stay distinct.
 public static class PetFormBuilder
 {
     // =========================== CONSTANTS ===========================
@@ -10,15 +11,22 @@ public static class PetFormBuilder
     private const string MODELS_FOLDER = "Assets/_Project/Art/Kenney/CubePets/Models";
     private const string DOG_STATS_PATH = PETS_FOLDER + "/DogMovementStats.asset";
 
+    // Jump for every gate animal but the Bunny: with the 0.8 ledge assist it reaches 4.2, under the Bunny's wall.
+    private const float LOW_JUMP_HEIGHT = 3.4f;
     private const float BUNNY_JUMP_HEIGHT = 5f;
     private const float BUNNY_AIR_CONTROL = 0.65f;
-    private const float BEE_JUMP_HEIGHT = 3.4f;
-    private const float BEE_GLIDE_FALL_SPEED = 2.2f;
-    private const float BEE_GLIDE_FORWARD_MULTIPLIER = 0.85f;
+    // About twice the Dog's sideways speed, so the Cat switches from one outer lane to the other between slalom rows.
+    private const float CAT_STEER_SPEED = 14f;
+    private const float CAT_STEER_ACCELERATION = 90f;
+    private const float CAT_STEER_DECELERATION = 120f;
+    // Climbs a ledge this far above its feet, so one jump reaches the 6-high cliff.
+    private const float MONKEY_LEDGE_ASSIST_HEIGHT = 3f;
+    // One slide covers about 15 units at run speed, so it clears the 9-unit spike tunnel with room to start early.
+    private const float PENGUIN_ROLL_DURATION = 1.8f;
 
     // ========================= STATIC METHODS ========================
 
-    public static void EnsureForms(out PetForm dog, out PetForm bunny, out PetForm bee)
+    public static void EnsureForms(out PetForm dog, out PetForm bunny, out PetForm cat, out PetForm monkey, out PetForm penguin)
     {
         var dogStats = AssetDatabase.LoadAssetAtPath<PetMovementStats>(DOG_STATS_PATH);
         PetMovementStats bunnyStats = LoadOrCopyStats(dogStats, "Bunny", stats =>
@@ -26,17 +34,29 @@ public static class PetFormBuilder
             stats.FindProperty("_jumpHeight").floatValue = BUNNY_JUMP_HEIGHT;
             stats.FindProperty("_airControl").floatValue = BUNNY_AIR_CONTROL;
         });
-        PetMovementStats beeStats = LoadOrCopyStats(dogStats, "Bee", stats =>
+        PetMovementStats catStats = LoadOrCopyStats(dogStats, "Cat", stats =>
         {
-            stats.FindProperty("_jumpHeight").floatValue = BEE_JUMP_HEIGHT;
-            stats.FindProperty("_canGlide").boolValue = true;
-            stats.FindProperty("_glideFallSpeed").floatValue = BEE_GLIDE_FALL_SPEED;
-            stats.FindProperty("_glideForwardMultiplier").floatValue = BEE_GLIDE_FORWARD_MULTIPLIER;
+            stats.FindProperty("_jumpHeight").floatValue = LOW_JUMP_HEIGHT;
+            stats.FindProperty("_steerSpeed").floatValue = CAT_STEER_SPEED;
+            stats.FindProperty("_steerAcceleration").floatValue = CAT_STEER_ACCELERATION;
+            stats.FindProperty("_steerDeceleration").floatValue = CAT_STEER_DECELERATION;
+        });
+        PetMovementStats monkeyStats = LoadOrCopyStats(dogStats, "Monkey", stats =>
+        {
+            stats.FindProperty("_jumpHeight").floatValue = LOW_JUMP_HEIGHT;
+            stats.FindProperty("_ledgeAssistHeight").floatValue = MONKEY_LEDGE_ASSIST_HEIGHT;
+        });
+        PetMovementStats penguinStats = LoadOrCopyStats(dogStats, "Penguin", stats =>
+        {
+            stats.FindProperty("_jumpHeight").floatValue = LOW_JUMP_HEIGHT;
+            stats.FindProperty("_rollDuration").floatValue = PENGUIN_ROLL_DURATION;
         });
 
         dog = LoadOrCreateForm("Dog", "animal-dog", dogStats, "Balanced run and jump", "Balanced run and jump");
         bunny = LoadOrCreateForm("Bunny", "animal-bunny", bunnyStats, "Super high jump!", "Super high jump!");
-        bee = LoadOrCreateForm("Bee", "animal-bee", beeStats, "Hold SPACE to glide", "Swipe up and hold to glide");
+        cat = LoadOrCreateForm("Cat", "animal-cat", catStats, "Lightning-fast lane switching", "Lightning-fast lane switching");
+        monkey = LoadOrCreateForm("Monkey", "animal-monkey", monkeyStats, "Jump at tall ledges to climb", "Jump at tall ledges to climb");
+        penguin = LoadOrCreateForm("Penguin", "animal-penguin", penguinStats, "Press S for a long belly slide", "Swipe down for a long belly slide");
     }
 
     public static string ModelPath(string modelName)

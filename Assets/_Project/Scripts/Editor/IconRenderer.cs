@@ -23,6 +23,14 @@ public static class IconRenderer
     private const float ALPHA_SOLID = 0.5f;
     private const float ALPHA_OPAQUE = 0.98f;
     private const int OUTLINE_RADIUS = 9;
+    private const string GEAR_PATH = OUTPUT_FOLDER + "/gear.png";
+    private const int GEAR_SIZE = 128;
+    private const int GEAR_TEETH = 8;
+    private const float GEAR_OUTER_RADIUS = 60f;
+    private const float GEAR_ROOT_RADIUS = 45f;
+    private const float GEAR_HOLE_RADIUS = 18f;
+    // Share of each tooth's slice of the circle that the tooth fills; the rest is the gap to the next tooth.
+    private const float GEAR_TOOTH_SHARE = 0.5f;
 
     private static readonly Vector3 _stagePosition = new Vector3(0f, -500f, 0f);
     private static readonly Quaternion _portraitRotation = Quaternion.Euler(0f, 155f, 0f);
@@ -65,6 +73,46 @@ public static class IconRenderer
         }
 
         return AssetDatabase.LoadAssetAtPath<Sprite>(outputPath);
+    }
+
+    // White gear with a hole for the settings buttons, drawn in code because the UI Pack has no settings icon.
+    public static Sprite EnsureGearSprite()
+    {
+        if (!File.Exists(GEAR_PATH))
+        {
+            Directory.CreateDirectory(OUTPUT_FOLDER);
+            WriteSprite(DrawGear(), GEAR_PATH);
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(GEAR_PATH);
+    }
+
+    private static Texture2D DrawGear()
+    {
+        var texture = new Texture2D(GEAR_SIZE, GEAR_SIZE, TextureFormat.RGBA32, false);
+        var pixels = new Color[GEAR_SIZE * GEAR_SIZE];
+        float center = (GEAR_SIZE - 1) * 0.5f;
+        float toothPeriod = 2f * Mathf.PI / GEAR_TEETH;
+
+        for (int y = 0; y < GEAR_SIZE; y++)
+        {
+            for (int x = 0; x < GEAR_SIZE; x++)
+            {
+                float dx = x - center;
+                float dy = y - center;
+                float radius = Mathf.Sqrt(dx * dx + dy * dy);
+                // Angle from the nearest tooth's centre line, then the distance in pixels to that tooth's side.
+                float toothAngle = Mathf.Repeat(Mathf.Atan2(dy, dx), toothPeriod) - toothPeriod * 0.5f;
+                float sideDistance = (toothPeriod * GEAR_TOOTH_SHARE * 0.5f - Mathf.Abs(toothAngle)) * radius;
+                float edgeRadius = Mathf.Lerp(GEAR_ROOT_RADIUS, GEAR_OUTER_RADIUS, Mathf.Clamp01(sideDistance + 0.5f));
+                float coverage = Mathf.Clamp01(edgeRadius - radius + 0.5f) * Mathf.Clamp01(radius - GEAR_HOLE_RADIUS + 0.5f);
+                pixels[y * GEAR_SIZE + x] = new Color(1f, 1f, 1f, coverage);
+            }
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply();
+        return texture;
     }
 
     private static void RenderHearts()

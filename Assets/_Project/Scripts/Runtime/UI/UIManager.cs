@@ -23,9 +23,6 @@ public class UIManager : MonoBehaviour
     private const float OBJECTIVE_POP_DELAY = 0.35f;
     private const float OBJECTIVE_PUNCH_SCALE = 0.3f;
     private const float OBJECTIVE_PUNCH_DURATION = 0.3f;
-    private const string SOUND_KEY = "SoundOn";
-    private const int SOUND_ON = 1;
-    private const int SOUND_OFF = 0;
     private const float TOAST_FADE_DURATION = 0.2f;
     private const float TOAST_POP_SCALE = 0.7f;
     private const float FAIL_BAR_DELAY = 0.3f;
@@ -153,11 +150,11 @@ public class UIManager : MonoBehaviour
     [Tooltip("Returns to the title from the fail screen.")]
     [SerializeField] private Button _failHomeButton;
 
-    [Header("Sound Toggle")]
-    [Tooltip("Buttons that turn sound on or off.")]
-    [SerializeField] private Button[] _soundButtons;
-    [Tooltip("Checkbox icon on each sound button.")]
-    [SerializeField] private Image[] _soundIcons;
+    [Header("Settings")]
+    [Tooltip("Settings overlay with the volume sliders and the vibration toggle.")]
+    [SerializeField] private SettingsPanel _settingsPanel;
+    [Tooltip("Buttons that open the settings panel, on the title and pause screens.")]
+    [SerializeField] private Button[] _settingsButtons;
 
     [Header("Audio")]
     [Tooltip("Source that plays UI sounds.")]
@@ -184,6 +181,7 @@ public class UIManager : MonoBehaviour
         _pauseScreen.HideImmediate();
         _winScreen.HideImmediate();
         _failScreen.HideImmediate();
+        _settingsPanel.HideImmediate();
 
         BindButton(_playButton, _gameManager.StartRun);
         BindButton(_pauseButton, _gameManager.Pause);
@@ -195,12 +193,13 @@ public class UIManager : MonoBehaviour
         BindButton(_failRetryButton, _gameManager.StartRun);
         BindButton(_failHomeButton, _gameManager.ReturnToTitle);
 
-        foreach (Button soundButton in _soundButtons)
+        foreach (Button settingsButton in _settingsButtons)
         {
-            BindButton(soundButton, ToggleSound);
+            BindButton(settingsButton, _settingsPanel.Open);
         }
 
-        ApplySound(PlayerPrefs.GetInt(SOUND_KEY, SOUND_ON) == SOUND_ON);
+        BindButton(_settingsPanel.CloseButton, _settingsPanel.Close);
+        BindButton(_settingsPanel.VibrationButton, _settingsPanel.ToggleVibration);
         UpdateControlHints();
         _coinObjectiveText.text = $"COLLECT {_gameManager.CoinsForStar} COINS";
         StartIdleAnimations();
@@ -265,9 +264,11 @@ public class UIManager : MonoBehaviour
 
     // On a win the HUD goes first and the win screen waits, so the dance and confetti have the screen to themselves.
     // Any other state change, such as a quick restart during the celebration, cancels the wait.
+    // Settings belong to the screen they were opened from, so leaving it (Esc to resume, say) closes them.
     private void HandleStateChanged(GameState state)
     {
         _winScreenDelayTween?.Kill();
+        _settingsPanel.Close();
 
         if (state == GameState.Won)
         {
@@ -466,23 +467,6 @@ public class UIManager : MonoBehaviour
         if (device is not Touchscreen) return;
 
         UpdateControlHints();
-    }
-
-    private void ToggleSound()
-    {
-        bool isOn = PlayerPrefs.GetInt(SOUND_KEY, SOUND_ON) != SOUND_ON;
-        PlayerPrefs.SetInt(SOUND_KEY, isOn ? SOUND_ON : SOUND_OFF);
-        PlayerPrefs.Save();
-        ApplySound(isOn);
-    }
-
-    private void ApplySound(bool isOn)
-    {
-        AudioListener.volume = isOn ? 1f : 0f;
-        foreach (Image icon in _soundIcons)
-        {
-            icon.sprite = isOn ? _checkOnSprite : _checkOffSprite;
-        }
     }
 
     private void PlayFailProgress(float progress)

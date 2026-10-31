@@ -16,6 +16,29 @@ public static class LevelBuilder
     private const float TILE_MODEL_SIZE = 2f;
     private const float GAP_LENGTH = 4f;
     private const float STEP_HEIGHT = 3f;
+    // Each gate segment has its checkpoint at the start and the gate pair in the middle.
+    private const float GATE_SEGMENT_LENGTH = 36f;
+    // Bunny reaches 5.8 with its jump plus the ledge assist, the Cat only 4.2, so only the Bunny climbs this in one jump.
+    private const float TALL_WALL_HEIGHT = 4.5f;
+    private const float TALL_WALL_LENGTH = 8f;
+    // Monkey reaches 6.4 with its 3-unit ledge assist, the Penguin only 4.2.
+    private const float CLIFF_HEIGHT = 6f;
+    private const float CLIFF_TOP_LENGTH = 12f;
+    private const float CLIFF_RUNUP_LENGTH = 30f;
+    // A half-height step in one lane in front of a wall or cliff: the two-jump way up for the other animal.
+    private const float SIDE_STEP_LENGTH = 8f;
+    // Rows 8 apart leave about 0.75 s between them: enough for the Cat to switch outer lanes, tight for the others.
+    private const int SLALOM_ROW_COUNT = 3;
+    private const float SLALOM_PLATFORM_LENGTH = 30f;
+    private const float SLALOM_START = 8f;
+    private const float SLALOM_ROW_SPACING = 8f;
+    // Spike blocks closer than this to the open lane's centre are left out, so a pet in that lane passes untouched.
+    private const float SLALOM_OPENING_HALF_WIDTH = 1.6f;
+    // Overhead bars this close leave no room to stand up between them. One Penguin slide covers the whole tunnel;
+    // the others have to slide again before each slide runs out.
+    private const float TUNNEL_LENGTH = 8f;
+    private const float TUNNEL_ROW_SPACING = 2f;
+    private const float TUNNEL_START = 4f;
     private const string COIN = "coin-gold";
     private const float COIN_BODY_HEIGHT = 0.6f;
     private const float COIN_SCALE = 1.5f;
@@ -27,8 +50,7 @@ public static class LevelBuilder
     private const float WALL_CLEARANCE = 1f;
     private const float STEP_LANDING_COIN_HEIGHT = 1.2f;
     private const float COIN_LINE_SPACING = 2.5f;
-    private const int COIN_LINE_COUNT = 4;
-    private const int SHORT_COIN_LINE_COUNT = 3;
+    private const int COIN_LINE_COUNT = 3;
     private const float ARC_TAKEOFF_LEAD = 1.5f;
     private const float STEP_TAKEOFF_LEAD = 3f;
 
@@ -63,15 +85,6 @@ public static class LevelBuilder
     private const float GATE_ICON_HEIGHT = 4.4f;
     private const float GATE_ICON_SCALE = 1.1f;
     private const float GATE_ICON_YAW = 180f;
-    private const int BONUS_ROW_COUNT = 3;
-    private const float BONUS_ROW_SPACING = 1.2f;
-    // A running pet collects coins centred up to about 2.25 above the ground (1.58 tall, plus the coin's 0.675 reach).
-    private const float BONUS_ROW_HEIGHT = 1.2f;
-    private const int GLIDE_TRAIL_COUNT = 6;
-    private const float GLIDE_TRAIL_START = 5.5f;
-    private const float GLIDE_TRAIL_SPACING = 1.5f;
-    private const float GLIDE_COIN_START_HEIGHT = 1.8f;
-    private const float GLIDE_COIN_END_HEIGHT = 1.2f;
     private const int OVERHEAD_BAR_BLOCKS = 7;
     private const float OVERHEAD_BAR_HALF_WIDTH = 3.15f;
     private const float OVERHEAD_BAR_CLEARANCE = 1.25f;
@@ -113,7 +126,9 @@ public static class LevelBuilder
     private static Transform _finishPoint;
     private static PetFormController _formController;
     private static PetForm _bunnyForm;
-    private static PetForm _beeForm;
+    private static PetForm _catForm;
+    private static PetForm _monkeyForm;
+    private static PetForm _penguinForm;
     private static readonly List<Transform> _cullTargets = new List<Transform>();
     private static int _coinCount;
     private static System.Random _random;
@@ -155,63 +170,76 @@ public static class LevelBuilder
     // Double-lane platforms are 24-40 long and fenced; single-lane platforms are 14-16 long and open.
     // Every gap is GAP_LENGTH and leads to the same height or lower, so a jump from within
     // 2 units of an edge always lands; climbing happens only on gapless step-ups.
-    // Coin lines hint at the safe lane; coin arcs trace the jump over every gap, step and spike row.
+    // Coins only mark the way: short lines on the safe lane, and arcs where the jump climbs, changes lane
+    // or clears spikes. Plain straight gaps get none.
     private static void BuildMeadow()
     {
         float startZ = _cursorZ;
         Platform(40f, 0f, _bothLanes, false);
-        CoinLine(LEFT_LANE, 0f, startZ + 10f, COIN_LINE_COUNT);
+        CoinLine(LEFT_LANE, 0f, startZ + 10f);
         SpikeLane(RIGHT, 0f, 20f);
         CoinArcOver(RIGHT_LANE, 0f, 20f);
-        CoinArcFromEdge(0f, 0f, 0f);
+        // The Dog learns to roll here; the Penguin's tunnel and the Summit bar need it later.
+        OverheadBar(0f, startZ + 36f);
+        CoinLine(0f, ROLL_COIN_DROP, startZ + 33.5f);
 
         Gap();
         startZ = _cursorZ;
-        Platform(28f, 0f, _bothLanes, false);
+        Platform(GATE_SEGMENT_LENGTH, 0f, _bothLanes, false);
         Checkpoint(startZ + 1f, 0f);
-        CoinLine(0f, 0f, startZ + 8f, COIN_LINE_COUNT);
-        GatePair(startZ + 20f, 0f, _bunnyForm, _beeForm);
-        CoinArcFromEdge(0f, 0f, 0f);
+        CoinLine(0f, 0f, startZ + 6f);
+        GatePair(startZ + GATE_SEGMENT_LENGTH * 0.5f, 0f, _bunnyForm, _catForm);
 
-        Gap();
+        // Bunny: clears the tall wall from either lane. Cat: crosses from its gate to the half-height step
+        // in the left lane and climbs in two jumps.
+        SideStep(LEFT_LANE, 0f, TALL_WALL_HEIGHT * 0.5f);
+        Platform(TALL_WALL_LENGTH, TALL_WALL_HEIGHT, _bothLanes, false);
+        CoinLine(0f, TALL_WALL_HEIGHT, _cursorZ - TALL_WALL_LENGTH + 1.5f);
+
+        // Cat: weaves through the slalom. Bunny: has to start each lane change the moment it passes a row.
         startZ = _cursorZ;
-        Platform(24f, 0f, _bothLanes, false);
-        OverheadBar(0f, startZ + 10f);
-        CoinLine(RIGHT_LANE, ROLL_COIN_DROP, startZ + 6f, COIN_LINE_COUNT);
-        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, 0f, STEP_HEIGHT);
+        Platform(SLALOM_PLATFORM_LENGTH, 0f, _bothLanes, false);
+        Slalom(0f, startZ + SLALOM_START);
+        CoinArcFromEdge(0f, 0f, 0f, STEP_HEIGHT);
     }
 
     private static void BuildCliffSteps()
     {
         float startZ = _cursorZ;
         Platform(24f, STEP_HEIGHT, _bothLanes, false);
-        CoinLine(0f, STEP_HEIGHT, startZ + 6f, COIN_LINE_COUNT);
-        BonusRow(0f, STEP_HEIGHT, startZ + 13f);
+        CoinLine(0f, STEP_HEIGHT, startZ + 6f);
         CoinArcFromEdge(0f, 0f, STEP_HEIGHT, STEP_HEIGHT * 2f);
 
         startZ = _cursorZ;
         Platform(24f, STEP_HEIGHT * 2f, _bothLanes, false);
-        CoinLine(RIGHT_LANE, STEP_HEIGHT * 2f, startZ + 8f, COIN_LINE_COUNT);
-        BonusRow(0f, STEP_HEIGHT * 2f, startZ + 12f);
-        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, STEP_HEIGHT * 2f);
+        CoinLine(RIGHT_LANE, STEP_HEIGHT * 2f, startZ + 8f);
         Gap();
 
         startZ = _cursorZ;
         Platform(16f, STEP_HEIGHT * 2f, _rightLane, false);
-        CoinLine(RIGHT_LANE, STEP_HEIGHT * 2f, startZ + 4f, SHORT_COIN_LINE_COUNT);
-        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, STEP_HEIGHT * 2f);
+        CoinLine(RIGHT_LANE, STEP_HEIGHT * 2f, startZ + 4f);
 
         Gap();
         startZ = _cursorZ;
-        float checkpointZ = startZ + 1f;
-        Platform(28f, STEP_HEIGHT, _bothLanes, false);
-        Checkpoint(checkpointZ, STEP_HEIGHT);
-        CoinLine(RIGHT_LANE, STEP_HEIGHT, startZ + 6f, COIN_LINE_COUNT);
-        GatePair(checkpointZ + 9f, STEP_HEIGHT, _beeForm, _bunnyForm);
-        SpikeLane(LEFT, STEP_HEIGHT, checkpointZ + 20f);
-        CoinArcOver(LEFT_LANE, STEP_HEIGHT, checkpointZ + 20f);
-        CoinArcFromEdge(0f, LEFT_LANE, STEP_HEIGHT);
-        GlideTrail(0f, LEFT_LANE, STEP_HEIGHT, _cursorZ);
+        float gateTopY = STEP_HEIGHT * 2f;
+        Platform(GATE_SEGMENT_LENGTH, gateTopY, _bothLanes, false);
+        Checkpoint(startZ + 1f, gateTopY);
+        CoinLine(RIGHT_LANE, gateTopY, startZ + 6f);
+        GatePair(startZ + GATE_SEGMENT_LENGTH * 0.5f, gateTopY, _monkeyForm, _penguinForm);
+
+        // Penguin: one slide clears the spike tunnel. Monkey: has to slide again before each slide runs out.
+        startZ = _cursorZ;
+        Platform(CLIFF_RUNUP_LENGTH, gateTopY, _bothLanes, false);
+        SpikeTunnel(gateTopY, startZ + TUNNEL_START);
+        CoinLine(0f, gateTopY + ROLL_COIN_DROP, startZ + TUNNEL_START);
+
+        // Monkey: climbs the cliff in one jump from either lane. Penguin: crosses to the half-height step
+        // in the left lane and climbs in two jumps.
+        SideStep(LEFT_LANE, gateTopY, CLIFF_HEIGHT * 0.5f);
+        float cliffTopY = gateTopY + CLIFF_HEIGHT;
+        Platform(CLIFF_TOP_LENGTH, cliffTopY, _bothLanes, false);
+        CoinLine(0f, cliffTopY, _cursorZ - CLIFF_TOP_LENGTH + 1.5f);
+        CoinArcFromEdge(0f, LEFT_LANE, cliffTopY);
     }
 
     private static void BuildSkyBridge()
@@ -219,28 +247,23 @@ public static class LevelBuilder
         Gap();
         float startZ = _cursorZ;
         Platform(14f, STEP_HEIGHT, _leftLane, false);
-        CoinLine(LEFT_LANE, STEP_HEIGHT, startZ + 4f, SHORT_COIN_LINE_COUNT);
+        CoinLine(LEFT_LANE, STEP_HEIGHT, startZ + 4f);
         CoinArcFromEdge(LEFT_LANE, RIGHT_LANE, STEP_HEIGHT);
-        GlideTrail(LEFT_LANE, RIGHT_LANE, STEP_HEIGHT, _cursorZ);
 
         Gap();
         startZ = _cursorZ;
         Platform(14f, STEP_HEIGHT, _rightLane, false);
-        CoinLine(RIGHT_LANE, STEP_HEIGHT, startZ + 4f, SHORT_COIN_LINE_COUNT);
-        CoinArcFromEdge(RIGHT_LANE, RIGHT_LANE, STEP_HEIGHT);
-        GlideTrail(RIGHT_LANE, 0f, STEP_HEIGHT, _cursorZ);
+        CoinLine(RIGHT_LANE, STEP_HEIGHT, startZ + 4f);
 
         // The slider swings between the lanes, so the jump onto it is timed, and it carries the pet across.
         Gap();
         Slider(STEP_HEIGHT);
-        CoinArcFromEdge(0f, 0f, STEP_HEIGHT);
 
         Gap();
         startZ = _cursorZ;
         Platform(24f, 0f, _bothLanes, false);
         Checkpoint(startZ + 1f, 0f);
-        CoinLine(0f, 0f, startZ + 8f, COIN_LINE_COUNT);
-        CoinArcFromEdge(0f, 0f, 0f);
+        CoinLine(0f, 0f, startZ + 8f);
     }
 
     private static float BuildSummit()
@@ -250,7 +273,7 @@ public static class LevelBuilder
         Gap();
         float startZ = _cursorZ;
         Platform(24f, 0f, _bothLanes, true);
-        CoinLine(LEFT_LANE, 0f, startZ + 6f, COIN_LINE_COUNT);
+        CoinLine(LEFT_LANE, 0f, startZ + 6f);
         CoinArcFromEdge(LEFT_LANE, LEFT_LANE, 0f, STEP_HEIGHT);
 
         startZ = _cursorZ;
@@ -258,15 +281,14 @@ public static class LevelBuilder
         float spikeZ = _cursorZ - 10f;
         SpikeLane(RIGHT, STEP_HEIGHT, spikeZ);
         CoinArcOver(RIGHT_LANE, STEP_HEIGHT, spikeZ);
-        CoinLine(LEFT_LANE, STEP_HEIGHT, startZ + 4f, SHORT_COIN_LINE_COUNT);
-        CoinArcFromEdge(0f, 0f, STEP_HEIGHT);
+        CoinLine(LEFT_LANE, STEP_HEIGHT, startZ + 4f);
         Gap();
 
         startZ = _cursorZ;
         float finishZ = _cursorZ + 16f;
         Platform(40f, STEP_HEIGHT, _bothLanes, true);
         OverheadBar(STEP_HEIGHT, startZ + 7f);
-        CoinLine(0f, STEP_HEIGHT + ROLL_COIN_DROP, startZ + 3f, COIN_LINE_COUNT);
+        CoinLine(0f, STEP_HEIGHT + ROLL_COIN_DROP, startZ + 3f);
         Finish(finishZ, STEP_HEIGHT);
 
         _snowZones.Clear();
@@ -276,11 +298,13 @@ public static class LevelBuilder
 
     // ----- Animal gates and form rewards -----
 
-    public static void ConfigureForms(PetFormController formController, PetForm bunnyForm, PetForm beeForm)
+    public static void ConfigureForms(PetFormController formController, PetForm bunnyForm, PetForm catForm, PetForm monkeyForm, PetForm penguinForm)
     {
         _formController = formController;
         _bunnyForm = bunnyForm;
-        _beeForm = beeForm;
+        _catForm = catForm;
+        _monkeyForm = monkeyForm;
+        _penguinForm = penguinForm;
     }
 
     // Two doors side by side, one per lane; running through one turns the pet into that animal.
@@ -335,51 +359,49 @@ public static class LevelBuilder
         return gate;
     }
 
-    // A tight row of coins at body height, picked up by any animal just running through.
-    private static void BonusRow(float x, float topY, float z)
-    {
-        for (int index = 0; index < BONUS_ROW_COUNT; index++)
-        {
-            PlaceCoin(new Vector3(x, topY + BONUS_ROW_HEIGHT, z + index * BONUS_ROW_SPACING));
-        }
-    }
-
-    // A long, gently falling trail just past a gap: the Bee can glide along all of it, and every animal
-    // picks up the rest by running on after landing.
-    private static void GlideTrail(float fromX, float toX, float topY, float edgeZ)
-    {
-        for (int index = 0; index < GLIDE_TRAIL_COUNT; index++)
-        {
-            float blend = index / (GLIDE_TRAIL_COUNT - 1f);
-            float x = Mathf.Lerp(fromX, toX, blend);
-            float z = edgeZ + GLIDE_TRAIL_START + index * GLIDE_TRAIL_SPACING;
-            float height = Mathf.Lerp(GLIDE_COIN_START_HEIGHT, GLIDE_COIN_END_HEIGHT, blend);
-            PlaceCoin(new Vector3(x, topY + height, z));
-        }
-    }
-
     // A full-width row of floating spike blocks at head height: roll under it or jump over it.
     private static void OverheadBar(float topY, float z)
     {
         for (int index = 0; index < OVERHEAD_BAR_BLOCKS; index++)
         {
             float x = -OVERHEAD_BAR_HALF_WIDTH + index * SPIKE_BLOCK_SPACING;
-            GameObject spikes = PlaceKit(SPIKES, _logicRoot, new Vector3(x, topY + OVERHEAD_BAR_CLEARANCE, z));
-            spikes.name = $"OverheadSpikes_{z:000}_{index}";
-            spikes.transform.localScale = Vector3.one * SPIKE_BLOCK_SCALE;
+            PlaceSpikes($"OverheadSpikes_{z:000}_{index}", new Vector3(x, topY + OVERHEAD_BAR_CLEARANCE, z));
+        }
+    }
 
-            BoxCollider trigger = AddBoxCollider(spikes, true);
-            trigger.size *= HAZARD_TRIGGER_INSET;
-            spikes.AddComponent<Hazard>();
-            _cullTargets.Add(spikes.transform);
+    // Overhead bars back to back, too close together to stand up between them.
+    private static void SpikeTunnel(float topY, float startZ)
+    {
+        for (float z = startZ; z <= startZ + TUNNEL_LENGTH; z += TUNNEL_ROW_SPACING)
+        {
+            OverheadBar(topY, z);
+        }
+    }
+
+    // Ground spike rows that each leave one outer lane open, alternating sides. A coin in each opening marks the way.
+    private static void Slalom(float topY, float startZ)
+    {
+        for (int row = 0; row < SLALOM_ROW_COUNT; row++)
+        {
+            float openX = row % 2 == 0 ? LEFT_LANE : RIGHT_LANE;
+            float z = startZ + row * SLALOM_ROW_SPACING;
+            for (int index = 0; index < OVERHEAD_BAR_BLOCKS; index++)
+            {
+                float x = -OVERHEAD_BAR_HALF_WIDTH + index * SPIKE_BLOCK_SPACING;
+                if (Mathf.Abs(x - openX) < SLALOM_OPENING_HALF_WIDTH) continue;
+
+                PlaceSpikes($"SlalomSpikes_{z:000}_{index}", new Vector3(x, topY, z));
+            }
+
+            PlaceCoin(new Vector3(openX, topY + COIN_BODY_HEIGHT, z));
         }
     }
 
     // ----- Coins -----
 
-    private static void CoinLine(float x, float topY, float startZ, int count)
+    private static void CoinLine(float x, float topY, float startZ)
     {
-        for (int index = 0; index < count; index++)
+        for (int index = 0; index < COIN_LINE_COUNT; index++)
         {
             PlaceCoin(new Vector3(x, topY + COIN_BODY_HEIGHT, startZ + index * COIN_LINE_SPACING));
         }
@@ -452,15 +474,9 @@ public static class LevelBuilder
 
     private static void Platform(float length, float topY, float[] lanes, bool isSnow)
     {
-        string tileModel = isSnow ? SNOW_TILE : GRASS_TILE;
         float width = lanes.Length * TILE_SIZE;
         float centerX = (lanes[0] + lanes[lanes.Length - 1]) * 0.5f;
-        var center = new Vector3(centerX, topY - PLATFORM_THICKNESS, _cursorZ + length * 0.5f);
-
-        // One stretched block per platform, so rounded tile edges leave no seams to see or snag on.
-        GameObject block = PlaceKit(tileModel, _courseRoot, center);
-        block.transform.localScale = new Vector3(width / TILE_MODEL_SIZE, PLATFORM_THICKNESS, length / TILE_MODEL_SIZE);
-        AddBoxCollider(block, false);
+        PlaceBlock(centerX, width, topY, _cursorZ, length, isSnow);
 
         bool isWalled = lanes.Length > 1;
         if (isWalled)
@@ -470,6 +486,23 @@ public static class LevelBuilder
         }
 
         _cursorZ += length;
+    }
+
+    // A lane-wide step that ends at the cursor, where the next wall or cliff starts. It sits on the platform
+    // below and leaves the cursor where it is.
+    private static void SideStep(float laneX, float baseY, float height)
+    {
+        PlaceBlock(laneX, TILE_SIZE, baseY + height, _cursorZ - SIDE_STEP_LENGTH, SIDE_STEP_LENGTH, false);
+    }
+
+    // One stretched block per platform, so rounded tile edges leave no seams to see or snag on.
+    private static void PlaceBlock(float centerX, float width, float topY, float startZ, float length, bool isSnow)
+    {
+        string tileModel = isSnow ? SNOW_TILE : GRASS_TILE;
+        var center = new Vector3(centerX, topY - PLATFORM_THICKNESS, startZ + length * 0.5f);
+        GameObject block = PlaceKit(tileModel, _courseRoot, center);
+        block.transform.localScale = new Vector3(width / TILE_MODEL_SIZE, PLATFORM_THICKNESS, length / TILE_MODEL_SIZE);
+        AddBoxCollider(block, false);
     }
 
     // A lane-wide platform of moving blocks, centred on the track and swinging out to each lane.
@@ -540,15 +573,20 @@ public static class LevelBuilder
         for (int index = 0; index < SPIKES_PER_LANE; index++)
         {
             float blockX = side * (SPIKE_LANE_START_X + index * SPIKE_BLOCK_SPACING);
-            GameObject spikes = PlaceKit(SPIKES, _logicRoot, new Vector3(blockX, topY, z));
-            spikes.name = $"Spikes_{z:000}_{index}";
-            spikes.transform.localScale = Vector3.one * SPIKE_BLOCK_SCALE;
-
-            BoxCollider trigger = AddBoxCollider(spikes, true);
-            trigger.size *= HAZARD_TRIGGER_INSET;
-            spikes.AddComponent<Hazard>();
-            _cullTargets.Add(spikes.transform);
+            PlaceSpikes($"Spikes_{z:000}_{index}", new Vector3(blockX, topY, z));
         }
+    }
+
+    private static void PlaceSpikes(string name, Vector3 position)
+    {
+        GameObject spikes = PlaceKit(SPIKES, _logicRoot, position);
+        spikes.name = name;
+        spikes.transform.localScale = Vector3.one * SPIKE_BLOCK_SCALE;
+
+        BoxCollider trigger = AddBoxCollider(spikes, true);
+        trigger.size *= HAZARD_TRIGGER_INSET;
+        spikes.AddComponent<Hazard>();
+        _cullTargets.Add(spikes.transform);
     }
 
     private static void Checkpoint(float z, float topY)

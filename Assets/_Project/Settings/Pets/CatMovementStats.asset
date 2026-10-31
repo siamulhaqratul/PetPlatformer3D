@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72bd055563b47f64c9f610e11f87615a, type: 3}
-  m_Name: BeeMovementStats
+  m_Name: CatMovementStats
   m_EditorClassIdentifier: 
   _forwardSpeed: 8.5
   _forwardAcceleration: 20
-  _steerSpeed: 7
-  _steerAcceleration: 45
-  _steerDeceleration: 60
+  _steerSpeed: 14
+  _steerAcceleration: 90
+  _steerDeceleration: 120
   _airControl: 0.8
   _jumpHeight: 3.4
   _gravity: 34
@@ -34,6 +34,6 @@ MonoBehaviour:
   _rollHeight: 0.9
   _rollRadius: 0.45
   _slamSpeed: 24
-  _canGlide: 1
+  _canGlide: 0
   _glideFallSpeed: 2.2
   _glideForwardMultiplier: 0.85

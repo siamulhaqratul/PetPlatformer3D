@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // Switches the canvas scaling and the portrait-aware elements whenever the screen turns between landscape and portrait.
+// The scaler expands the canvas to cover at least the reference resolution, so on any aspect ratio
+// (4:3, 16:10, 21:9, tall phones) the full layout stays on screen and only gains empty margin.
 [RequireComponent(typeof(CanvasScaler))]
 public class ResponsiveCanvas : MonoBehaviour
 {
@@ -10,16 +12,10 @@ public class ResponsiveCanvas : MonoBehaviour
     [Header("Landscape")]
     [Tooltip("Reference resolution on landscape screens.")]
     [SerializeField] private Vector2 _landscapeResolution = new Vector2(1920f, 1080f);
-    [Tooltip("Width (0) to height (1) match on landscape screens.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float _landscapeMatch = 0.5f;
 
     [Header("Portrait")]
     [Tooltip("Reference resolution on portrait screens.")]
     [SerializeField] private Vector2 _portraitResolution = new Vector2(1080f, 1920f);
-    [Tooltip("Width (0) to height (1) match on portrait screens. Matching width keeps everything inside a narrow screen.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float _portraitMatch;
 
     [Header("Elements")]
     [Tooltip("Elements that move or resize in portrait.")]
@@ -37,6 +33,7 @@ public class ResponsiveCanvas : MonoBehaviour
     private void Awake()
     {
         _scaler = GetComponent<CanvasScaler>();
+        _scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
         ApplyOrientation();
     }
 
@@ -58,7 +55,6 @@ public class ResponsiveCanvas : MonoBehaviour
         _isPortrait = isPortrait;
         _hasApplied = true;
         _scaler.referenceResolution = isPortrait ? _portraitResolution : _landscapeResolution;
-        _scaler.matchWidthOrHeight = isPortrait ? _portraitMatch : _landscapeMatch;
 
         foreach (OrientationLayout layout in _layouts)
         {

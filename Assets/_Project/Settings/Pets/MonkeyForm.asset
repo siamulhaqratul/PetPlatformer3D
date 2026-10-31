@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99614e0302a290545832e8706430bbe9, type: 3}
+  m_Name: MonkeyForm
+  m_EditorClassIdentifier: 
+  _displayName: MONKEY
+  _abilityText: Jump at tall ledges to climb
+  _touchAbilityText: Jump at tall ledges to climb
+  _icon: {fileID: 21300000, guid: cd0130a23d813f441b3ccfd2fd7012af, type: 3}
+  _modelPrefab: {fileID: 919132149155446097, guid: 160f9d0609650fc48afc8123e2f52a2a, type: 3}
+  _animatorController: {fileID: 9100000, guid: bbd03bb88a2576446827f0722737d66e, type: 2}
+  _stats: {fileID: 11400000, guid: bee67ece7d64dd543b14ebd600922ad1, type: 2}

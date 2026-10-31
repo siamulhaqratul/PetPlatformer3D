@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // Plays the game's sound effects and jingles in response to gameplay events. Button clicks and coin pickups
-// stay with the UI manager. The sound toggle mutes everything through the AudioListener.
+// stay with the UI manager. Volumes come from SoundSettings, which the settings panel sets.
 public class GameAudio : MonoBehaviour
 {
     // =========================== CONSTANTS ===========================

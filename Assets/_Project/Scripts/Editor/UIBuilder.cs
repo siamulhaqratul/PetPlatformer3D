@@ -65,6 +65,11 @@ public static class UIBuilder
     private const float PAUSE_BAR_GAP = 12f;
     private const float PAUSE_ICON_LIFT = 4f;
     private const string MARKER = "slide_hangle";
+    private const string SLIDER_TRACK = "slide_horizontal_grey";
+    private const string SLIDER_FILL = "slide_horizontal_color";
+    private const float SETTINGS_LABEL_X = -215f;
+    private const float SETTINGS_CONTROL_X = 120f;
+    private const float GEAR_ICON_SIZE = 58f;
 
     private static readonly Vector2 _referenceResolution = new Vector2(1920f, 1080f);
     private static readonly Vector2 _menuButtonSize = new Vector2(480f, 124f);
@@ -75,8 +80,9 @@ public static class UIBuilder
     private static readonly Vector2 _pauseBarSize = new Vector2(14f, 44f);
     private static readonly Vector2 _toastSize = new Vector2(860f, 170f);
     private static readonly Vector2 _heartSize = new Vector2(76f, 70f);
-    private static readonly List<Button> _soundButtons = new List<Button>();
-    private static readonly List<Image> _soundIcons = new List<Image>();
+    private static readonly Vector2 _sliderSize = new Vector2(380f, 34f);
+    private static readonly Vector2 _sliderHandleSize = new Vector2(40f, 54f);
+    private static readonly List<Button> _settingsButtons = new List<Button>();
     private static readonly List<OrientationLayout> _portraitLayouts = new List<OrientationLayout>();
     private static readonly Color _shineColor = new Color(1f, 1f, 1f, 0.35f);
     private static readonly Color _dividerTint = new Color(0.7f, 0.73f, 0.82f);
@@ -123,16 +129,16 @@ public static class UIBuilder
         Set(managerObject, "_checkOffSprite", LoadSprite(GREY, CHECK_OFF));
         managerObject.FindProperty("_emptyStarColor").colorValue = _emptyStarTint;
 
-        _soundButtons.Clear();
-        _soundIcons.Clear();
+        _settingsButtons.Clear();
         _portraitLayouts.Clear();
         BuildHud(root.transform, managerObject);
         BuildStartScreen(root.transform, managerObject);
         BuildPauseScreen(root.transform, managerObject);
         BuildWinScreen(root.transform, managerObject);
         BuildFailScreen(root.transform, managerObject);
-        SetArray(managerObject, "_soundButtons", _soundButtons.ToArray());
-        SetArray(managerObject, "_soundIcons", _soundIcons.ToArray());
+        // Built last so it draws over the title and pause screens it opens from.
+        BuildSettingsScreen(root.transform, managerObject);
+        SetArray(managerObject, "_settingsButtons", _settingsButtons.ToArray());
         managerObject.ApplyModifiedPropertiesWithoutUndo();
 
         var responsiveObject = new SerializedObject(root.GetComponent<ResponsiveCanvas>());
@@ -181,7 +187,7 @@ public static class UIBuilder
     // Current animal, under the hearts.
     private static void BuildFormBadge(RectTransform parent, SerializedObject manager)
     {
-        PetFormBuilder.EnsureForms(out PetForm dog, out _, out _);
+        PetFormBuilder.EnsureForms(out PetForm dog, out _, out _, out _, out _);
         Image badge = CreatePill("FormBadge", parent, new Vector2(195f, -180f), new Vector2(310f, 96f), TextAnchor.UpperLeft);
         Image icon = CreateImage("Icon", badge.rectTransform, dog.Icon, new Vector2(-100f, 6f), new Vector2(84f, 84f));
         TMP_Text name = CreateText("Name", badge.rectTransform, dog.DisplayName, 44f, _darkText, new Vector2(40f, 6f), new Vector2(190f, 70f), false);
@@ -232,7 +238,9 @@ public static class UIBuilder
     {
         UIScreen screen = CreateScreen("StartScreen", root, _lightDimColor, out RectTransform content);
         Set(manager, "_startScreen", screen);
-        CreateSoundToggle(content, new Vector2(-170f, -70f), TextAnchor.UpperRight);
+
+        // Same spot and shape as the HUD's pause button.
+        _settingsButtons.Add(CreateGearButton(content, new Vector2(-95f, -72f), TextAnchor.UpperRight));
 
         // The title fills a holder that changes shape with the orientation; in portrait it wraps onto two lines.
         RectTransform titleHolder = CreateRect("TitleHolder", content);
@@ -340,7 +348,47 @@ public static class UIBuilder
         Set(manager, "_pauseRestartButton", CreateButton("RestartButton", card, "RESTART", YELLOW, BUTTON, new Vector2(0f, 35f), _menuButtonSize, 54f, LoadSprite(EXTRA, ICON_REPEAT)));
         Set(manager, "_pauseHomeButton", CreateButton("HomeButton", card, "HOME", BLUE, BUTTON, new Vector2(0f, -105f), _menuButtonSize, 54f, LoadSprite(GREY, ARROW_LEFT)));
         CreateDivider(card, new Vector2(0f, -200f), 560f);
-        CreateSoundToggle(card, new Vector2(0f, -280f), TextAnchor.MiddleCenter);
+        _settingsButtons.Add(CreateGearButton(card, new Vector2(0f, -290f), TextAnchor.MiddleCenter));
+    }
+
+    // Overlay with the volume sliders, the vibration toggle and a Done button.
+    private static void BuildSettingsScreen(Transform root, SerializedObject manager)
+    {
+        UIScreen screen = CreateScreen("SettingsScreen", root, _dimColor, out RectTransform content);
+        RectTransform card = CreateCard(content, BLUE, "SETTINGS", new Vector2(760f, 620f));
+
+        CreateSettingsLabel(card, "SOUND FX", 150f);
+        Slider sfxSlider = CreateSlider("SfxSlider", card, new Vector2(SETTINGS_CONTROL_X, 150f));
+        CreateSettingsLabel(card, "MUSIC", 45f);
+        Slider bgmSlider = CreateSlider("MusicSlider", card, new Vector2(SETTINGS_CONTROL_X, 45f));
+
+        RectTransform vibrationRow = CreateRect("VibrationRow", card);
+        vibrationRow.anchoredPosition = new Vector2(0f, -60f);
+        vibrationRow.sizeDelta = new Vector2(700f, 90f);
+        CreateSettingsLabel(vibrationRow, "VIBRATION", 0f);
+        Image vibrationCheck = CreateImage("VibrationToggle", vibrationRow, LoadSprite(GREEN, CHECK_ON), new Vector2(SETTINGS_CONTROL_X - _sliderSize.x * 0.5f + 36f, 0f), new Vector2(72f, 72f));
+        vibrationCheck.raycastTarget = true;
+        var vibrationButton = vibrationCheck.gameObject.AddComponent<Button>();
+        vibrationButton.navigation = new Navigation { mode = Navigation.Mode.None };
+        vibrationCheck.gameObject.AddComponent<TapEffect>();
+
+        CreateDivider(card, new Vector2(0f, -140f), 640f);
+        Button close = CreateButton("DoneButton", card, "DONE", GREEN, BUTTON, new Vector2(0f, -225f), new Vector2(480f, 110f), 54f, null);
+
+        var panel = screen.gameObject.AddComponent<SettingsPanel>();
+        var panelObject = new SerializedObject(panel);
+        Set(panelObject, "_screen", screen);
+        Set(panelObject, "_sfxSlider", sfxSlider);
+        Set(panelObject, "_bgmSlider", bgmSlider);
+        Set(panelObject, "_vibrationRow", vibrationRow.gameObject);
+        Set(panelObject, "_vibrationButton", vibrationButton);
+        Set(panelObject, "_vibrationCheck", vibrationCheck);
+        Set(panelObject, "_checkOnSprite", LoadSprite(GREEN, CHECK_ON));
+        Set(panelObject, "_checkOffSprite", LoadSprite(GREY, CHECK_OFF));
+        Set(panelObject, "_closeButton", close);
+        Set(panelObject, "_gameAudio", Object.FindObjectOfType<GameAudio>());
+        panelObject.ApplyModifiedPropertiesWithoutUndo();
+        Set(manager, "_settingsPanel", panel);
     }
 
     private static void BuildWinScreen(Transform root, SerializedObject manager)
@@ -426,19 +474,55 @@ public static class UIBuilder
         return check;
     }
 
-    private static void CreateSoundToggle(RectTransform parent, Vector2 position, TextAnchor anchor)
+    private static void CreateSettingsLabel(RectTransform parent, string label, float y)
     {
-        Image pill = CreatePill("SoundToggle", parent, position, new Vector2(260f, 90f), anchor);
-        pill.raycastTarget = true;
-        var button = pill.gameObject.AddComponent<Button>();
-        button.navigation = new Navigation { mode = Navigation.Mode.None };
-        pill.gameObject.AddComponent<TapEffect>();
+        TMP_Text text = CreateText($"Label_{label}", parent, label, 40f, _darkText, new Vector2(SETTINGS_LABEL_X, y + 4f), new Vector2(240f, 70f), false);
+        text.alignment = TextAlignmentOptions.Left;
+    }
 
-        Image icon = CreateImage("Check", pill.rectTransform, LoadSprite(GREEN, CHECK_ON), new Vector2(-80f, 4f), new Vector2(54f, 54f));
-        CreateText("Label", pill.rectTransform, "SOUND", 36f, _darkText, new Vector2(30f, 6f), new Vector2(160f, 60f), false);
+    // A UI Pack slider from 0 to 1: a grey track, a coloured fill up to the value and a handle to drag.
+    private static Slider CreateSlider(string name, RectTransform parent, Vector2 position)
+    {
+        Image track = CreateImage(name, parent, LoadSprite(GREY, SLIDER_TRACK), position, _sliderSize);
+        track.type = Image.Type.Sliced;
+        track.raycastTarget = true;
 
-        _soundButtons.Add(button);
-        _soundIcons.Add(icon);
+        RectTransform fillArea = CreateRect("FillArea", track.rectTransform);
+        Stretch(fillArea);
+        Image fill = CreateImage("Fill", fillArea, LoadSprite(BLUE, SLIDER_FILL), Vector2.zero, Vector2.zero);
+        fill.type = Image.Type.Sliced;
+        Stretch(fill.rectTransform);
+
+        // Inset by half a handle so the handle stops at the track's ends instead of hanging past them.
+        RectTransform handleArea = CreateRect("HandleArea", track.rectTransform);
+        Stretch(handleArea);
+        handleArea.offsetMin = new Vector2(_sliderHandleSize.x * 0.5f, 0f);
+        handleArea.offsetMax = new Vector2(-_sliderHandleSize.x * 0.5f, 0f);
+        // The slider stretches the handle to the track's height, so its size here is what it adds to that height.
+        Image handle = CreateImage("Handle", handleArea, LoadSprite(YELLOW, MARKER), Vector2.zero, new Vector2(_sliderHandleSize.x, _sliderHandleSize.y - _sliderSize.y));
+        handle.raycastTarget = true;
+
+        var slider = track.gameObject.AddComponent<Slider>();
+        slider.fillRect = fill.rectTransform;
+        slider.handleRect = handle.rectTransform;
+        slider.targetGraphic = handle;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = 1f;
+        slider.navigation = new Navigation { mode = Navigation.Mode.None };
+        return slider;
+    }
+
+    // Round blue button the size of the HUD's pause button, with a gear centred on its face like the pause bars.
+    private static Button CreateGearButton(RectTransform parent, Vector2 position, TextAnchor anchor)
+    {
+        Button button = CreateButton("SettingsButton", parent, string.Empty, BLUE, ROUND_BUTTON, position, new Vector2(112f, 112f), 50f, null, anchor);
+        Image gear = CreateImage("Gear", (RectTransform)button.transform, IconRenderer.EnsureGearSprite(), new Vector2(0f, PAUSE_ICON_LIFT), Vector2.one * GEAR_ICON_SIZE);
+        var shadow = gear.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = _outlineColor;
+        shadow.effectDistance = new Vector2(0f, -3f);
+        return button;
     }
 
     private static TMP_Text CreateCoinRow(RectTransform parent, Vector2 position)
@@ -575,7 +659,7 @@ public static class UIBuilder
         var scaler = root.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = _referenceResolution;
-        scaler.matchWidthOrHeight = 0.5f;
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
 
         root.AddComponent<ResponsiveCanvas>();
         root.AddComponent<GraphicRaycaster>();
